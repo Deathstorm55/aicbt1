@@ -52,7 +52,16 @@ export default function Chat() {
             });
 
             if (error) {
-                throw new Error(error.message);
+                // Try to extract the real error from the response context
+                let errorDetail = error.message;
+                try {
+                    if (error.context && typeof error.context.json === 'function') {
+                        const errorBody = await error.context.json();
+                        errorDetail = errorBody?.error || errorDetail;
+                    }
+                } catch (_) { /* ignore parse errors */ }
+                console.error("Edge Function error detail:", errorDetail);
+                throw new Error(errorDetail);
             }
 
             if (data && data.reply) {
@@ -67,10 +76,14 @@ export default function Chat() {
                         encrypted_response: encryptedReply
                     }]);
                 }
+            } else if (data && data.error) {
+                // The function returned 200 but with an error field
+                console.error("Chat function returned error:", data.error);
+                throw new Error(data.error);
             }
         } catch (error) {
             console.error("Chat error:", error);
-            setMessages(prev => [...prev, { role: "assistant", content: "Sorry, I am having trouble connecting right now. Please try again." }]);
+            setMessages(prev => [...prev, { role: "assistant", content: `Sorry, I am having trouble connecting right now. (${error.message || 'Unknown error'})` }]);
         }
         setLoading(false);
     };
