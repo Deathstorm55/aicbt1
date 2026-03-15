@@ -9,7 +9,7 @@ const ENCRYPTION_KEY = import.meta.env.VITE_ENCRYPTION_KEY || 'my-secret-key-123
 const encrypt = (text) => CryptoJS.AES.encrypt(text, ENCRYPTION_KEY).toString();
 
 export default function Chat() {
-    const { userData } = useAuth();
+    const { userData, supabase } = useAuth();
     const [messages, setMessages] = useState([
         { role: "assistant", content: "Hello. I am here to listen and help you work through what you're feeling using Cognitive Behavioral Therapy principles. How are you doing today?" }
     ]);
@@ -25,7 +25,7 @@ export default function Chat() {
 
     const handleSend = async (e) => {
         e.preventDefault();
-        if (!input.trim() || loading) return;
+        if (!input.trim() || loading || !supabase) return;
 
         const userMessage = input.trim();
         setInput("");

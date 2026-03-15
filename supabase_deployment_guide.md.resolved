@@ -1,0 +1,56 @@
+# Supabase Production Deployment Guide
+
+You have two main components to deploy from your Supabase backend: the **Database Schema (Migrations)** and your **Edge Functions**.
+
+## 1. Deploying the Database Schema (Migrations)
+
+Since your project uses a SQL migrations folder (`supabase/migrations/`), the safest way to deploy these to your production database without setting up a CI/CD pipeline is to run the SQL commands manually via the Supabase Dashboard.
+
+### Process
+1. Log in to your [Supabase Dashboard](https://supabase.com/dashboard).
+2. Open your project and navigate to the **SQL Editor** on the left menu.
+3. You have two migration files in your project that contain your tables and RLS policies:
+   - `01_v1_2_schema.sql` (Creates your profiles, verses, and chat tables)
+   - `0002_create_users_table.sql` (Creates your new Clerk-linked `users` table)
+4. Open both of these files in your IDE (VS Code).
+5. Copy the contents of `01_v1_2_schema.sql` and paste it into a **New Query** in the Supabase SQL Editor.
+6. Click **Run** to execute the query. 
+7. Create *another* **New Query**, copy the contents of `0002_create_users_table.sql`, paste it, and click **Run**.
+
+*Your database tables and Row Level Security policies are now live in production!*
+
+---
+
+## 2. Deploying Edge Functions
+
+You have three Edge Functions: `chat`, `chatEndpoint`, and `daily-verse`. To deploy these, you must use the Supabase CLI from your local terminal.
+
+### Process
+1. Open your terminal in VS Code and ensure you are in the root directory of your project (`c:\aicbt`).
+2. Log in to the Supabase CLI if you haven't already:
+   ```bash
+   npx supabase login
+   ```
+   *(This will open a browser window for you to generate an Access Token. Copy the token and paste it back into your terminal).*
+3. Link your local project to your live Supabase project. You will need your Project ID (this is the string of characters in your Supabase project URL: `https://supabase.com/dashboard/project/<PROJECT_ID>`):
+   ```bash
+   npx supabase link --project-ref <YOUR_PROJECT_ID>
+   ```
+   *(It will prompt for your database password. Enter the password you created when you first set up the Supabase project).*
+4. Deploy the functions one by one using these commands:
+   ```bash
+   npx supabase functions deploy chat --no-verify-jwt
+   npx supabase functions deploy chatEndpoint --no-verify-jwt
+   npx supabase functions deploy daily-verse --no-verify-jwt
+   ```
+
+*(Note: The `--no-verify-jwt` flag is used because your Edge Functions likely handle external API requests or custom authorization, and strict default JWT enforcement might block them).*
+
+### Don't Forget Environmental Variables!
+If your Edge Functions rely on external API keys (like an OpenAI key or Gemini API key), you must set them in production!
+```bash
+npx supabase secrets set OPENAI_API_KEY=your-actual-api-key
+npx supabase secrets set ANOTHER_SECRET=value
+```
+
+You are now fully deployed on both Vercel (Frontend) and Supabase (Backend)!

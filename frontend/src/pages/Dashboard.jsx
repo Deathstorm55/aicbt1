@@ -6,7 +6,7 @@ import { supabase } from '../services/supabase';
 import { motion } from 'framer-motion';
 
 export default function Dashboard() {
-    const { currentUser, userData, logout } = useAuth();
+    const { currentUser, userData, logout, supabase } = useAuth();
     const navigate = useNavigate();
     const [mood, setMood] = useState('');
     const [logging, setLogging] = useState(false);
@@ -15,7 +15,7 @@ export default function Dashboard() {
 
     useEffect(() => {
         const fetchDailyVerse = async () => {
-            if (!userData || !userData.eligible_for_chatbot) return;
+            if (!userData || !userData.eligible_for_chatbot || !supabase) return;
 
             const today = new Date().toISOString().split('T')[0];
             const { data, error } = await supabase
@@ -56,7 +56,7 @@ export default function Dashboard() {
         };
 
         fetchDailyVerse();
-    }, [userData, currentUser]);
+    }, [userData, currentUser, supabase]);
 
     const getSeverity = (score) => {
         if (score <= 4) return "Minimal Depression";
@@ -68,7 +68,7 @@ export default function Dashboard() {
 
     const handleMoodSubmit = async (e) => {
         e.preventDefault();
-        if (!mood) return;
+        if (!mood || !supabase) return;
         setLogging(true);
         try {
             const { error } = await supabase

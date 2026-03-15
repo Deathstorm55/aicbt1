@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../services/supabase';
-
 const PHQ9_QUESTIONS = [
     "Little interest or pleasure in doing things",
     "Feeling down, depressed, or hopeless",
@@ -23,7 +21,7 @@ const OPTIONS = [
 ];
 
 export default function PHQ9Form() {
-    const { userData, logout, refreshUserData } = useAuth();
+    const { userData, logout, refreshUserData, supabase } = useAuth();
     const navigate = useNavigate();
     const [answers, setAnswers] = useState(Array(9).fill(null));
     const [loading, setLoading] = useState(false);
@@ -54,6 +52,7 @@ export default function PHQ9Form() {
         }
 
         try {
+            if (!supabase) throw new Error("Authentication not initialized.");
             const { error: updateError } = await supabase
                 .from('users')
                 .update({

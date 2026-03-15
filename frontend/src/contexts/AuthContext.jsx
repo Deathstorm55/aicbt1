@@ -13,16 +13,19 @@ export function AuthProvider({ children }) {
     const { user: clerkUser, isLoaded: clerkLoaded } = useUser();
     const { getToken, signOut } = useClerkAuth();
 
-    const [userData, setUserData] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const [authenticatedSupabase, setAuthenticatedSupabase] = useState(null);
 
     const fetchUserProfile = useCallback(async () => {
-        if (!clerkUser) return;
+        if (!clerkUser) {
+            setAuthenticatedSupabase(null);
+            return;
+        }
         try {
             const token = await getToken({ template: 'supabase' });
-            const supabase = createClerkSupabaseClient(token);
+            const supabaseClient = createClerkSupabaseClient(token);
+            setAuthenticatedSupabase(supabaseClient);
 
-            const { data: profile, error } = await supabase
+            const { data: profile, error } = await supabaseClient
                 .from('users')
                 .select('*')
                 .eq('clerk_user_id', clerkUser.id)
@@ -49,6 +52,7 @@ export function AuthProvider({ children }) {
                 } else {
                     if (mounted) {
                         setUserData(null);
+                        setAuthenticatedSupabase(null);
                         setLoading(false);
                     }
                 }
@@ -60,13 +64,16 @@ export function AuthProvider({ children }) {
 
     const logout = async () => {
         await signOut();
+        setUserData(null);
+        setAuthenticatedSupabase(null);
     };
 
     const value = {
         currentUser: clerkUser,
         userData,
         logout,
-        refreshUserData: fetchUserProfile
+        refreshUserData: fetchUserProfile,
+        supabase: authenticatedSupabase
     };
 
     return (

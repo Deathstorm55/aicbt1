@@ -28,10 +28,11 @@ export default function Onboarding() {
         setLoading(true);
 
         try {
-            const token = await window.Clerk.session?.getToken({ template: 'supabase' });
-            const supabase = createClerkSupabaseClient(token);
+            // Clerk token retrieval
+            const token = await user.getToken({ template: 'supabase' });
+            const supabaseTokenClient = createClerkSupabaseClient(token);
 
-            const { error: insertError } = await supabase
+            const { error: insertError } = await supabaseTokenClient
                 .from('users')
                 .insert({
                     clerk_user_id: user.id,
