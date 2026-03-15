@@ -13,6 +13,8 @@ export function AuthProvider({ children }) {
     const { user: clerkUser, isLoaded: clerkLoaded } = useUser();
     const { getToken, signOut } = useClerkAuth();
 
+    const [userData, setUserData] = useState(null);
+    const [loading, setLoading] = useState(true);
     const [authenticatedSupabase, setAuthenticatedSupabase] = useState(null);
 
     const fetchUserProfile = useCallback(async () => {
