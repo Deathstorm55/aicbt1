@@ -9,20 +9,39 @@ Deno.serve(async (req) => {
     }
 
     try {
-        const { religion, message, history } = await req.json()
+        const { religion, message, history, userName, moodLogs } = await req.json()
 
         const apiKey = Deno.env.get('LLAMA_API_KEY')
         if (!apiKey) throw new Error('LLAMA_API_KEY secret is not set in Supabase project settings.')
 
-        let systemPrompt = "You are a compassionate AI therapist providing spiritually adapted Cognitive Behavioral Therapy. Always align encouragement with the user's religious background when appropriate.\n\n"
+        // Build personalized system prompt
+        let systemPrompt = `You are a compassionate AI therapist named "AI Therapist" providing spiritually adapted Cognitive Behavioral Therapy (CBT). You are speaking with ${userName || 'a user'}.\n\n`
 
+        // Add religion context
         if (religion === 'christian') {
-            systemPrompt += "Provide CBT guidance and include supportive Bible verses relevant to the user's emotional state."
+            systemPrompt += "Provide CBT guidance and include supportive Bible verses relevant to the user's emotional state.\n\n"
         } else if (religion === 'muslim') {
-            systemPrompt += "Provide CBT guidance and include supportive Quran verses relevant to the user's emotional state."
+            systemPrompt += "Provide CBT guidance and include supportive Quran verses relevant to the user's emotional state.\n\n"
         } else {
-            systemPrompt += "Provide CBT guidance using neutral motivational wisdom without religious references."
+            systemPrompt += "Provide CBT guidance using neutral motivational wisdom without religious references.\n\n"
         }
+
+        // Add mood history context if available
+        if (moodLogs && moodLogs.length > 0) {
+            systemPrompt += "Here is the user's recent mood log history (most recent first). Use this to understand their emotional patterns and tailor your CBT approach:\n"
+            moodLogs.forEach((log: { mood: string; date: string }) => {
+                const date = new Date(log.date).toLocaleDateString()
+                systemPrompt += `- ${date}: ${log.mood}\n`
+            })
+            systemPrompt += "\nUse these mood patterns to identify cognitive distortions, suggest relevant CBT techniques, and track their progress.\n\n"
+        }
+
+        systemPrompt += `Guidelines:
+- Address the user by their name (${userName || 'Friend'}) occasionally to build rapport.
+- Use CBT techniques like cognitive restructuring, thought records, and behavioral activation.
+- Be empathetic, concise, and structured.
+- Do not diagnose the user. You are for mild to moderate support only.
+- If the user seems to be in crisis, direct them to professional help.`
 
         // Build messages array
         const messages = [{ role: 'system', content: systemPrompt }]

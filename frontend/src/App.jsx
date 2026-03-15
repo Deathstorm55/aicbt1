@@ -12,6 +12,23 @@ function PrivateRoute({ children }) {
   const { currentUser, userData } = useAuth();
   if (!currentUser) return <Navigate to="/auth" />;
   if (!userData) return <Navigate to="/onboarding" />;
+  // Redirect to assessment if PHQ9 not completed
+  if (userData.phq9_score === undefined || userData.phq9_score === null) {
+    return <Navigate to="/assessment" />;
+  }
+  return children;
+}
+
+function ChatRoute({ children }) {
+  const { currentUser, userData } = useAuth();
+  if (!currentUser) return <Navigate to="/auth" />;
+  if (!userData) return <Navigate to="/onboarding" />;
+  if (userData.phq9_score === undefined || userData.phq9_score === null) {
+    return <Navigate to="/assessment" />;
+  }
+  if (!userData.eligible_for_chatbot) {
+    return <Navigate to="/" />;
+  }
   return children;
 }
 
@@ -80,7 +97,7 @@ export default function App() {
           <Route path="/onboarding" element={<OnboardingRoute><Onboarding /></OnboardingRoute>} />
           <Route path="/assessment" element={<AssessmentRoute><PHQ9Form /></AssessmentRoute>} />
           <Route path="/" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-          <Route path="/chat" element={<PrivateRoute><Chat /></PrivateRoute>} />
+          <Route path="/chat" element={<ChatRoute><Chat /></ChatRoute>} />
         </Routes>
       </main>
     </>

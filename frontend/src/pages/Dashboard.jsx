@@ -20,7 +20,7 @@ export default function Dashboard() {
             const { data, error } = await supabase
                 .from('daily_verses')
                 .select('*')
-                .eq('user_id', userData.id)
+                .eq('clerk_user_id', currentUser.id)
                 .eq('date_served', today)
                 .single();
 
@@ -39,7 +39,7 @@ export default function Dashboard() {
                     const verse = res.data.verse;
 
                     await supabase.from('daily_verses').insert([{
-                        user_id: userData.id,
+                        clerk_user_id: currentUser.id,
                         verse_text: verse,
                         religion: userData.religion || 'prefer_not_to_say',
                         date_served: today

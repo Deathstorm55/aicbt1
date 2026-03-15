@@ -8,13 +8,38 @@ const ENCRYPTION_KEY = import.meta.env.VITE_ENCRYPTION_KEY || 'my-secret-key-123
 const encrypt = (text) => CryptoJS.AES.encrypt(text, ENCRYPTION_KEY).toString();
 
 export default function Chat() {
-    const { userData, supabase } = useAuth();
+    const { currentUser, userData, supabase } = useAuth();
     const [messages, setMessages] = useState([
         { role: "assistant", content: "Hello. I am here to listen and help you work through what you're feeling using Cognitive Behavioral Therapy principles. How are you doing today?" }
     ]);
     const [input, setInput] = useState("");
     const [loading, setLoading] = useState(false);
+    const [moodLogs, setMoodLogs] = useState([]);
     const scrollRef = useRef(null);
+
+    // Fetch recent mood logs on mount to provide context to the AI
+    useEffect(() => {
+        const fetchMoodLogs = async () => {
+            if (!supabase || !currentUser) return;
+            try {
+                const { data, error } = await supabase
+                    .from('mood_logs')
+                    .select('mood, created_at')
+                    .eq('clerk_user_id', currentUser.id)
+                    .order('created_at', { ascending: false })
+                    .limit(7);
+
+                if (error) {
+                    console.error("Error fetching mood logs:", error);
+                } else {
+                    setMoodLogs(data || []);
+                }
+            } catch (err) {
+                console.error("Failed to fetch mood logs:", err);
+            }
+        };
+        fetchMoodLogs();
+    }, [supabase, currentUser]);
 
     useEffect(() => {
         if (scrollRef.current) {
@@ -47,11 +72,16 @@ export default function Chat() {
             const encryptedMessage = encrypt(userMessage);
 
             const { data, error } = await supabase.functions.invoke('chat', {
-                body: { message: userMessage, history: messages, religion: userData?.religion || 'prefer_not_to_say' }
+                body: {
+                    message: userMessage,
+                    history: messages,
+                    religion: userData?.religion || 'prefer_not_to_say',
+                    userName: userData?.name || 'Friend',
+                    moodLogs: moodLogs.map(m => ({ mood: m.mood, date: m.created_at }))
+                }
             });
 
             if (error) {
-                // Try to extract the real error from the response context
                 let errorDetail = error.message;
                 try {
                     if (error.context && typeof error.context.json === 'function') {
@@ -68,15 +98,15 @@ export default function Chat() {
                 const encryptedReply = encrypt(aiReply);
                 setMessages(prev => [...prev, { role: "assistant", content: aiReply }]);
 
-                if (userData?.id) {
-                    await supabase.from('chat_messages').insert([{
-                        user_id: userData.id,
+                if (currentUser?.id) {
+                    const { error: insertError } = await supabase.from('chat_messages').insert([{
+                        clerk_user_id: currentUser.id,
                         encrypted_message: encryptedMessage,
                         encrypted_response: encryptedReply
                     }]);
+                    if (insertError) console.error("Failed to save chat message:", insertError);
                 }
             } else if (data && data.error) {
-                // The function returned 200 but with an error field
                 console.error("Chat function returned error:", data.error);
                 throw new Error(data.error);
             }
