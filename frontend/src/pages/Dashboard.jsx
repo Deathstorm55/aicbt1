@@ -68,12 +68,12 @@ export default function Dashboard() {
 
     const handleMoodSubmit = async (e) => {
         e.preventDefault();
-        if (!mood || !supabase) return;
+        if (!mood || !supabase || !currentUser) return;
         setLogging(true);
         try {
             const { error } = await supabase
                 .from('mood_logs')
-                .insert([{ user_id: userData.id, mood: mood }]);
+                .insert([{ clerk_user_id: currentUser.id, mood: mood }]);
 
             if (error) throw error;
 

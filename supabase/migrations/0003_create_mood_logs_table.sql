@@ -1,7 +1,11 @@
--- Create mood_logs table
-CREATE TABLE IF NOT EXISTS public.mood_logs (
+-- Drop existing mood_logs table if it exists (handles any existing bad FK)
+DROP TABLE IF EXISTS public.mood_logs;
+
+-- Create mood_logs table using clerk_user_id (text) to avoid FK issues with public.users
+-- This is safer since clerk_user_id is always available from the JWT
+CREATE TABLE public.mood_logs (
     id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id uuid REFERENCES public.users(id) ON DELETE CASCADE,
+    clerk_user_id text NOT NULL,
     mood text NOT NULL,
     created_at timestamp with time zone DEFAULT now()
 );
@@ -9,22 +13,15 @@ CREATE TABLE IF NOT EXISTS public.mood_logs (
 -- Enable RLS
 ALTER TABLE public.mood_logs ENABLE ROW LEVEL SECURITY;
 
--- Policies for mood_logs
--- We use the users table's clerk_user_id to link with auth.jwt() ->> 'sub'
+-- Policies for mood_logs using the Clerk JWT claim 'sub'
 CREATE POLICY "Users can insert their own mood logs" 
 ON public.mood_logs FOR INSERT 
 WITH CHECK (
-    EXISTS (
-        SELECT 1 FROM public.users 
-        WHERE id = user_id AND clerk_user_id = (auth.jwt() ->> 'sub')
-    )
+    clerk_user_id = (auth.jwt() ->> 'sub')
 );
 
 CREATE POLICY "Users can view their own mood logs" 
 ON public.mood_logs FOR SELECT 
 USING (
-    EXISTS (
-        SELECT 1 FROM public.users 
-        WHERE id = user_id AND clerk_user_id = (auth.jwt() ->> 'sub')
-    )
+    clerk_user_id = (auth.jwt() ->> 'sub')
 );
