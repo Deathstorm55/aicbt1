@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { useUser, useAuth as useClerkAuth } from '@clerk/clerk-react';
 import { createClerkSupabaseClient } from '../services/supabase';
 
@@ -15,19 +15,17 @@ export function AuthProvider({ children }) {
 
     const [userData, setUserData] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [authenticatedSupabase, setAuthenticatedSupabase] = useState(null);
+
+    // Create a single Supabase client that auto-refreshes the Clerk token on every request
+    const authenticatedSupabase = useMemo(() => {
+        if (!clerkUser) return null;
+        return createClerkSupabaseClient(getToken);
+    }, [clerkUser, getToken]);
 
     const fetchUserProfile = useCallback(async () => {
-        if (!clerkUser) {
-            setAuthenticatedSupabase(null);
-            return;
-        }
+        if (!clerkUser || !authenticatedSupabase) return;
         try {
-            const token = await getToken({ template: 'supabase' });
-            const supabaseClient = createClerkSupabaseClient(token);
-            setAuthenticatedSupabase(supabaseClient);
-
-            const { data: profile, error } = await supabaseClient
+            const { data: profile, error } = await authenticatedSupabase
                 .from('users')
                 .select('*')
                 .eq('clerk_user_id', clerkUser.id)
@@ -42,7 +40,7 @@ export function AuthProvider({ children }) {
             console.error("Error resolving Clerk token:", err);
             setUserData(null);
         }
-    }, [clerkUser, getToken]);
+    }, [clerkUser, authenticatedSupabase]);
 
     useEffect(() => {
         let mounted = true;
@@ -54,7 +52,6 @@ export function AuthProvider({ children }) {
                 } else {
                     if (mounted) {
                         setUserData(null);
-                        setAuthenticatedSupabase(null);
                         setLoading(false);
                     }
                 }
@@ -67,7 +64,6 @@ export function AuthProvider({ children }) {
     const logout = async () => {
         await signOut();
         setUserData(null);
-        setAuthenticatedSupabase(null);
     };
 
     const value = {

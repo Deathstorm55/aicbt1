@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../services/supabase';
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 

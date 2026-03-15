@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { useUser } from '@clerk/clerk-react';
-import { createClerkSupabaseClient } from '../services/supabase';
 
 export default function Onboarding() {
     const [name, setName] = useState('');
@@ -14,7 +13,7 @@ export default function Onboarding() {
 
     const navigate = useNavigate();
     const { user } = useUser();
-    const { refreshUserData } = useAuth();
+    const { refreshUserData, supabase } = useAuth();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -28,11 +27,9 @@ export default function Onboarding() {
         setLoading(true);
 
         try {
-            // Clerk token retrieval
-            const token = await user.getToken({ template: 'supabase' });
-            const supabaseTokenClient = createClerkSupabaseClient(token);
+            if (!supabase) throw new Error("Authentication not ready. Please try again.");
 
-            const { error: insertError } = await supabaseTokenClient
+            const { error: insertError } = await supabase
                 .from('users')
                 .insert({
                     clerk_user_id: user.id,
