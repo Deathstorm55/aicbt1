@@ -11,7 +11,7 @@ DROP TABLE IF EXISTS public.chat_messages;
 
 -- 2. Recreate daily_verses with clerk_user_id
 CREATE TABLE public.daily_verses (
-    id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     clerk_user_id text NOT NULL,
     verse_text text NOT NULL,
     religion text NOT NULL,
@@ -31,7 +31,7 @@ WITH CHECK (clerk_user_id = (auth.jwt() ->> 'sub'));
 
 -- 3. Recreate chat_messages with clerk_user_id
 CREATE TABLE public.chat_messages (
-    id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     clerk_user_id text NOT NULL,
     encrypted_message text NOT NULL,
     encrypted_response text NOT NULL,

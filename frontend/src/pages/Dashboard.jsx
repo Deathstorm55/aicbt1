@@ -1,8 +1,43 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-// eslint-disable-next-line no-unused-vars
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
+
+const Toast = ({ message, type, onClose }) => {
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            onClose();
+        }, 3000);
+        return () => clearTimeout(timer);
+    }, [onClose]);
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            style={{
+                position: 'fixed',
+                bottom: '2rem',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                background: type === 'error' ? 'rgba(229, 57, 53, 0.9)' : 'rgba(76, 175, 80, 0.9)',
+                color: 'white',
+                padding: '1rem 2rem',
+                borderRadius: '99px',
+                boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
+                zIndex: 1000,
+                backdropFilter: 'blur(10px)',
+                fontWeight: '500',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+            }}
+        >
+            {message}
+        </motion.div>
+    );
+};
 
 export default function Dashboard() {
     const { currentUser, userData, logout, supabase } = useAuth();
@@ -11,6 +46,8 @@ export default function Dashboard() {
     const [logging, setLogging] = useState(false);
     const [dailyVerse, setDailyVerse] = useState('');
     const [loadingVerse, setLoadingVerse] = useState(false);
+    const [toast, setToast] = useState(null); // { message, type }
+    const [logsTodayCount, setLogsTodayCount] = useState(0);
 
     useEffect(() => {
         const fetchDailyVerse = async () => {
@@ -57,6 +94,27 @@ export default function Dashboard() {
         fetchDailyVerse();
     }, [userData, currentUser, supabase]);
 
+    useEffect(() => {
+        const fetchMoodLogsCount = async () => {
+            if (!supabase || !currentUser) return;
+            const today = new Date().toISOString().split('T')[0];
+            const startOfDay = `${today}T00:00:00.000Z`;
+            const endOfDay = `${today}T23:59:59.999Z`;
+
+            const { count, error } = await supabase
+                .from('mood_logs')
+                .select('*', { count: 'exact', head: true })
+                .eq('clerk_user_id', currentUser.id)
+                .gte('created_at', startOfDay)
+                .lte('created_at', endOfDay);
+
+            if (!error && count !== null) {
+                setLogsTodayCount(count);
+            }
+        };
+        fetchMoodLogsCount();
+    }, [supabase, currentUser]);
+
     const getSeverity = (score) => {
         if (score <= 4) return "Minimal Depression";
         if (score <= 9) return "Mild Depression";
@@ -65,9 +123,23 @@ export default function Dashboard() {
         return "Severe Depression";
     };
 
+    const getSeverityColor = (score) => {
+        if (score <= 4) return "#81c784"; // Light Green
+        if (score <= 9) return "#dce775"; // Yellow-Green
+        if (score <= 14) return "#ffd54f"; // Soft Gold/Yellow
+        if (score <= 19) return "#ffb74d"; // Orange
+        return "#e57373"; // Soft Red
+    };
+
     const handleMoodSubmit = async (e) => {
         e.preventDefault();
         if (!mood || !supabase || !currentUser) return;
+
+        if (logsTodayCount >= 2) {
+            setToast({ message: 'You have already logged your mood twice today (Morning & Evening).', type: 'error' });
+            return;
+        }
+
         setLogging(true);
         try {
             const { error } = await supabase
@@ -76,17 +148,24 @@ export default function Dashboard() {
 
             if (error) throw error;
 
-            alert('Mood logged successfully!');
+            setLogsTodayCount(prev => prev + 1);
+            setToast({ message: 'Mood logged successfully!', type: 'success' });
             setMood('');
         } catch (err) {
             console.error(err);
-            alert('Failed to log mood.');
+            setToast({ message: 'Failed to log mood.', type: 'error' });
         }
         setLogging(false);
     };
 
     return (
         <div className="container" style={{ paddingTop: '2rem', paddingBottom: '2rem' }}>
+            <AnimatePresence>
+                {toast && (
+                    <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
+                )}
+            </AnimatePresence>
+
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
                 <h2>Your Dashboard</h2>
                 <button onClick={logout} className="btn-ghost" style={{ padding: '0.5rem 1rem' }}>Sign Out</button>
@@ -122,12 +201,17 @@ export default function Dashboard() {
                     <h3 className="text-secondary" style={{ marginBottom: '1rem' }}>Latest Assessment</h3>
                     {userData?.phq9_score !== undefined && userData?.phq9_score !== null ? (
                         <>
-                            <div style={{ fontSize: '3rem', fontWeight: 'bold', color: 'var(--primary)' }}>
+                            <div style={{ fontSize: '3rem', fontWeight: 'bold', color: getSeverityColor(userData.phq9_score) }}>
                                 {userData.phq9_score} <span style={{ fontSize: '1rem', color: 'var(--text-muted)' }}>/ 27</span>
                             </div>
-                            <p style={{ marginTop: '0.5rem', fontWeight: '500' }}>
+                            <p style={{ marginTop: '0.5rem', fontWeight: '500', color: getSeverityColor(userData.phq9_score) }}>
                                 {getSeverity(userData.phq9_score)}
                             </p>
+                            {userData?.ai_insights && (
+                                <div style={{ marginTop: '1rem', padding: '1rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', fontSize: '0.875rem', borderLeft: `3px solid ${getSeverityColor(userData.phq9_score)}` }}>
+                                    <i>"{userData.ai_insights}"</i>
+                                </div>
+                            )}
                             {userData.last_assessment_date && (
                                 <p className="text-muted" style={{ fontSize: '0.875rem', marginTop: '1rem' }}>
                                     Last assessed: {new Date(userData.last_assessment_date).toLocaleDateString()}
@@ -169,8 +253,8 @@ export default function Dashboard() {
                             <option value="bad">Bad</option>
                             <option value="awful">Awful</option>
                         </select>
-                        <button type="submit" className="btn btn-secondary" disabled={logging || !mood}>
-                            {logging ? 'Saving...' : 'Log Mood'}
+                        <button type="submit" className="btn btn-secondary" disabled={logging || !mood || logsTodayCount >= 2}>
+                            {logsTodayCount >= 2 ? 'Daily Limit Reached' : (logging ? 'Saving...' : 'Log Mood')}
                         </button>
                     </form>
                 </div>

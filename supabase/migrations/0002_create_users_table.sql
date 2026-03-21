@@ -15,8 +15,7 @@ CREATE TABLE IF NOT EXISTS public.users (
 -- Turn on row level security
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 
--- Allow users to read and update their own data
--- The request.jwt.claim('sub') extracts the custom claim set by Clerk
+DROP POLICY IF EXISTS "Users can insert their own record" ON public.users;
 CREATE POLICY "Users can insert their own record" 
 ON public.users 
 FOR INSERT 
@@ -25,6 +24,7 @@ WITH CHECK (
   (auth.jwt() ->> 'sub') = clerk_user_id
 );
 
+DROP POLICY IF EXISTS "Users can read their own record" ON public.users;
 CREATE POLICY "Users can read their own record" 
 ON public.users 
 FOR SELECT 
@@ -33,6 +33,7 @@ USING (
   (auth.jwt() ->> 'sub') = clerk_user_id
 );
 
+DROP POLICY IF EXISTS "Users can update their own record" ON public.users;
 CREATE POLICY "Users can update their own record" 
 ON public.users 
 FOR UPDATE 

@@ -16,13 +16,16 @@ Deno.serve(async (req) => {
         const apiKey = Deno.env.get('LLAMA_API_KEY')
         if (!apiKey) throw new Error('LLAMA_API_KEY secret is not set in Supabase project settings.')
 
-        let prompt = "Generate a short encouraging verse or quote aligned with the user's religion that promotes hope, patience, and emotional resilience."
+        const themes = ["hope", "peace", "strength", "overcoming anxiety", "patience", "forgiveness", "guidance"];
+        const randomTheme = themes[Math.floor(Math.random() * themes.length)];
+
+        let prompt = `Provide a short, UNIQUE, and less commonly quoted encouraging verse or quote aligned with the user's religion that promotes ${randomTheme} and emotional resilience. Do not repeat Jeremiah 29:11.`
         if (religion === 'christian') {
-            prompt += ' Use a Bible verse.'
+            prompt += ' Use a specific Bible verse. Quote the text and the reference.'
         } else if (religion === 'muslim') {
-            prompt += ' Use a Quran verse.'
+            prompt += ' Use a specific Quran verse. Quote the text and the reference.'
         } else {
-            prompt += ' Use a neutral motivational quote without religious references.'
+            prompt += ' Use a secular motivational or philosophical quote.'
         }
 
         const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {

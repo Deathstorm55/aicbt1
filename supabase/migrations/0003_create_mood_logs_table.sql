@@ -4,7 +4,7 @@ DROP TABLE IF EXISTS public.mood_logs;
 -- Create mood_logs table using clerk_user_id (text) to avoid FK issues with public.users
 -- This is safer since clerk_user_id is always available from the JWT
 CREATE TABLE public.mood_logs (
-    id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     clerk_user_id text NOT NULL,
     mood text NOT NULL,
     created_at timestamp with time zone DEFAULT now()

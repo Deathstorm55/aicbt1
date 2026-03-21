@@ -125,7 +125,7 @@ export default function Chat() {
                     <p className="text-muted" style={{ fontSize: '0.875rem' }}>AI CBT Chatbot • Mild/Moderate Support</p>
                 </div>
 
-                <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', paddingRight: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div ref={scrollRef} className="no-scrollbar" style={{ flex: 1, overflowY: 'auto', paddingRight: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     <AnimatePresence>
                         {messages.map((msg, idx) => (
                             <motion.div

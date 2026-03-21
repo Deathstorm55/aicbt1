@@ -1,6 +1,17 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import CryptoJS from 'crypto-js';
+
+const ENCRYPTION_KEY = import.meta.env.VITE_ENCRYPTION_KEY || 'my-secret-key-123';
+const decrypt = (encryptedText) => {
+    try {
+        const bytes = CryptoJS.AES.decrypt(encryptedText, ENCRYPTION_KEY);
+        return bytes.toString(CryptoJS.enc.Utf8);
+    } catch (e) {
+        return "";
+    }
+};
 const PHQ9_QUESTIONS = [
     "Little interest or pleasure in doing things",
     "Feeling down, depressed, or hopeless",
@@ -53,13 +64,57 @@ export default function PHQ9Form() {
 
         try {
             if (!supabase) throw new Error("Authentication not initialized.");
+
+            let ai_insights = null;
+
+            // Fetch recent mood logs
+            const { data: moodLogs } = await supabase
+                .from('mood_logs')
+                .select('mood, created_at')
+                .eq('clerk_user_id', userData.id)
+                .order('created_at', { ascending: false })
+                .limit(7);
+
+            // Fetch recent chat history
+            const { data: chatHistoryData } = await supabase
+                .from('chat_messages')
+                .select('encrypted_message, encrypted_response, created_at')
+                .eq('clerk_user_id', userData.id)
+                .order('created_at', { ascending: false })
+                .limit(5);
+
+            const decodedChatHistory = [];
+            if (chatHistoryData) {
+                chatHistoryData.reverse().forEach(row => {
+                    const userMsg = decrypt(row.encrypted_message);
+                    const aiMsg = decrypt(row.encrypted_response);
+                    if (userMsg) decodedChatHistory.push({ role: 'user', content: userMsg });
+                    if (aiMsg) decodedChatHistory.push({ role: 'assistant', content: aiMsg });
+                });
+            }
+
+            const { data: aiData, error: aiError } = await supabase.functions.invoke('analyze-assessment', {
+                body: {
+                    phq9_score: score,
+                    moodLogs: moodLogs?.map(m => ({ mood: m.mood, date: m.created_at })) || [],
+                    chatHistory: decodedChatHistory,
+                    religion: userData.religion || 'prefer_not_to_say'
+
+                }
+            });
+
+            if (!aiError && aiData?.ai_insights) {
+                ai_insights = aiData.ai_insights;
+            }
+
             const { error: updateError } = await supabase
                 .from('users')
                 .update({
                     phq9_score: score,
                     eligible_for_chatbot: eligible_for_chatbot,
                     last_assessment_date: new Date().toISOString(),
-                    needs_crisis_intervention: isCrisis
+                    needs_crisis_intervention: isCrisis,
+                    ai_insights: ai_insights
                 })
                 .eq('id', userData.id);
 
