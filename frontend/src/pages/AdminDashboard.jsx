@@ -94,11 +94,21 @@ export default function AdminDashboard() {
                 </motion.div>
 
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-panel text-center">
+                    <h4 className="text-secondary" style={{ marginBottom: '0.5rem', fontSize: '0.9rem' }}>Active Users (7d)</h4>
+                    <span style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--primary)' }}>{metrics.activeUsersCount}</span>
+                </motion.div>
+
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="glass-panel text-center">
+                    <h4 className="text-secondary" style={{ marginBottom: '0.5rem', fontSize: '0.9rem' }}>Avg Chat Msgs / User</h4>
+                    <span style={{ fontSize: '2.5rem', fontWeight: 'bold' }}>{metrics.averageChatbotUsage}</span>
+                </motion.div>
+
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="glass-panel text-center">
                     <h4 className="text-secondary" style={{ marginBottom: '0.5rem' }}>Avg PHQ-9 Score</h4>
                     <span style={{ fontSize: '2.5rem', fontWeight: 'bold' }}>{metrics.averagePhq9}</span>
                 </motion.div>
 
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="glass-panel text-center" style={{ border: metrics.crisisCount > 0 ? '1px solid #ff6b6b' : undefined }}>
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="glass-panel text-center" style={{ border: metrics.crisisCount > 0 ? '1px solid #ff6b6b' : undefined }}>
                     <h4 style={{ color: metrics.crisisCount > 0 ? '#ff6b6b' : 'var(--secondary)', marginBottom: '0.5rem' }}>In Crisis</h4>
                     <span style={{ fontSize: '2.5rem', fontWeight: 'bold', color: metrics.crisisCount > 0 ? '#ff6b6b' : 'inherit' }}>
                         {metrics.crisisCount}

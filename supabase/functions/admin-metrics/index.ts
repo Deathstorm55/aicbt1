@@ -53,17 +53,41 @@ Deno.serve(async (req) => {
 
         if (usersError) throw usersError
 
-        // Fetch mood logs (for trends)
+        // Fetch mood logs (for trends and active users)
         const { data: moodLogs, error: moodLogsError } = await adminClient
             .from('mood_logs')
-            .select('mood, created_at')
+            .select('clerk_user_id, mood, created_at')
             .order('created_at', { ascending: true })
 
         if (moodLogsError) throw moodLogsError
 
+        // Fetch chat messages (for active users and usage stats)
+        const { data: chatMessages, error: chatError } = await adminClient
+            .from('chat_messages')
+            .select('clerk_user_id, created_at')
+
+        if (chatError) throw chatError
+
         // Aggregate metrics securely on the server
         const totalUsers = users.length
         const crisisCount = users.filter(u => u.needs_crisis_intervention).length
+
+        // Active Users: unique users who sent a chat or mood log in the last 7 days
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        const cutoffDate = sevenDaysAgo.toISOString();
+
+        const activeUserIds = new Set();
+        moodLogs.forEach(log => {
+            if (log.created_at >= cutoffDate) activeUserIds.add(log.clerk_user_id);
+        });
+        chatMessages.forEach(msg => {
+            if (msg.created_at >= cutoffDate) activeUserIds.add(msg.clerk_user_id);
+        });
+        const activeUsersCount = activeUserIds.size;
+
+        // Average Chatbot Usage: total messages / total users
+        const averageChatbotUsage = totalUsers > 0 ? (chatMessages.length / totalUsers).toFixed(1) : 0;
 
         let validScores = 0
         let sumScores = 0
@@ -107,7 +131,7 @@ Deno.serve(async (req) => {
 
         return new Response(
             JSON.stringify({
-                metrics: { totalUsers, averagePhq9, crisisCount },
+                metrics: { totalUsers, averagePhq9, crisisCount, activeUsersCount, averageChatbotUsage },
                 scoreDistribution,
                 moodTrends: formattedMoodTrends
             }),
