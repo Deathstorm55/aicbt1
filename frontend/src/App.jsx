@@ -93,7 +93,7 @@ export default function App() {
 
           {/* Desktop Navigation */}
           {currentUser && (
-            <div className="desktop-only" style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+            <div className="desktop-only" style={{ gap: '1rem', alignItems: 'center' }}>
               <button
                 className="btn-ghost"
                 onClick={() => window.location.href = '/chat'}
