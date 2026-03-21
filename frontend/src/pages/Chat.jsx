@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import CryptoJS from 'crypto-js';
-// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
+import { TextShimmer } from '../components/ui/text-shimmer';
 
 const ENCRYPTION_KEY = import.meta.env.VITE_ENCRYPTION_KEY || 'my-secret-key-123';
 const encrypt = (text) => CryptoJS.AES.encrypt(text, ENCRYPTION_KEY).toString();
@@ -154,9 +154,14 @@ export default function Chat() {
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
-                            style={{ alignSelf: 'flex-start', color: 'var(--text-muted)' }}
+                            style={{ alignSelf: 'flex-start', paddingLeft: '0.5rem' }}
                         >
-                            <i>assistant is typing...</i>
+                            <TextShimmer
+                                duration={1.5}
+                                className='text-sm italic font-medium [--base-color:theme(colors.slate.400)] [--base-gradient-color:theme(colors.white)] dark:[--base-color:theme(colors.slate.500)] dark:[--base-gradient-color:theme(colors.white)]'
+                            >
+                                assistant is typing...
+                            </TextShimmer>
                         </motion.div>
                     )}
                 </div>
