@@ -74,7 +74,7 @@ function AdminRoute({ children }) {
 }
 
 export default function App() {
-  const { currentUser } = useAuth();
+  const { currentUser, userData } = useAuth();
 
   return (
     <>
