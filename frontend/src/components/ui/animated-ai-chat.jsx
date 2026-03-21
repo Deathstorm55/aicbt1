@@ -153,7 +153,7 @@ export function AnimatedAIChat({
     };
 
     return (
-        <div className="flex flex-col w-full h-full max-h-[calc(100vh-120px)] relative glass-panel !p-0 overflow-hidden shadow-glow">
+        <div className="flex flex-col w-full h-full max-h-[calc(100vh-140px)] relative glass-panel !p-0 overflow-hidden shadow-glow">
             {/* Background Blobs */}
             <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
                 <div className="absolute top-0 left-1/4 w-64 h-64 opacity-20 bg-primary/20 rounded-full mix-blend-normal filter blur-[80px] animate-pulse" />
@@ -176,13 +176,13 @@ export function AnimatedAIChat({
             {/* Messages Area */}
             <div
                 ref={scrollRef}
-                className="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar"
+                className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar"
             >
                 <motion.div
                     variants={containerVariants}
                     initial="hidden"
                     animate="show"
-                    className="space-y-4"
+                    className="space-y-6"
                 >
                     <AnimatePresence mode="popLayout">
                         {messages.map((msg, index) => (
@@ -196,7 +196,7 @@ export function AnimatedAIChat({
                                 )}
                             >
                                 <div className={cn(
-                                    "max-w-[85%] md:max-w-[70%] px-4 py-2.5 rounded-2xl text-[0.9375rem] leading-relaxed shadow-sm",
+                                    "max-w-[85%] md:max-w-[70%] px-5 py-3 rounded-2xl text-[0.9375rem] leading-relaxed shadow-sm",
                                     msg.role === 'user'
                                         ? "bg-primary text-white rounded-tr-none border border-white/10"
                                         : "bg-white/5 backdrop-blur-sm text-white/90 rounded-tl-none border border-white/5"
