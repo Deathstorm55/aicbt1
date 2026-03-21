@@ -15,6 +15,27 @@ export default function Onboarding() {
     const { user } = useUser();
     const { refreshUserData, supabase } = useAuth();
 
+    const containerVariants = {
+        hidden: { opacity: 0, y: 20 },
+        visible: {
+            opacity: 1,
+            y: 0,
+            transition: {
+                duration: 0.5,
+                staggerChildren: 0.1,
+            },
+        },
+    };
+
+    const itemVariants = {
+        hidden: { opacity: 0, y: 10 },
+        visible: {
+            opacity: 1,
+            y: 0,
+            transition: { duration: 0.3 },
+        },
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
@@ -53,29 +74,29 @@ export default function Onboarding() {
     };
 
     return (
-        <div className="container flex-center" style={{ minHeight: '100vh' }}>
+        <div className="container flex-center" style={{ minHeight: '100vh', padding: '1rem' }}> {/* Added padding for mobile responsiveness */}
             <motion.div
                 className="glass-panel"
                 style={{ width: '100%', maxWidth: '400px' }}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
+                variants={containerVariants} // Apply container variants
+                initial="hidden"
+                animate="visible"
             >
-                <h2 className="text-center text-secondary" style={{ marginBottom: '1.5rem', fontSize: '2rem' }}>
+                <motion.h2 variants={itemVariants} className="text-center text-secondary" style={{ marginBottom: '1.5rem', fontSize: '2rem' }}>
                     Welcome to AI Therapist
-                </h2>
-                <p className="text-center text-muted" style={{ marginBottom: '2rem' }}>
+                </motion.h2>
+                <motion.p variants={itemVariants} className="text-center text-muted" style={{ marginBottom: '2rem' }}>
                     Let's set up your profile for personalized support.
-                </p>
+                </motion.p>
 
                 {error && (
-                    <div style={{ background: 'rgba(255,0,0,0.1)', color: '#ff6b6b', padding: '0.75rem', borderRadius: '8px', marginBottom: '1.5rem', border: '1px solid rgba(255,0,0,0.2)', fontSize: '0.875rem' }}>
+                    <motion.div variants={itemVariants} style={{ background: 'rgba(255,0,0,0.1)', color: '#ff6b6b', padding: '0.75rem', borderRadius: '8px', marginBottom: '1.5rem', border: '1px solid rgba(255,0,0,0.2)', fontSize: '0.875rem' }}>
                         {error}
-                    </div>
+                    </motion.div>
                 )}
 
                 <form onSubmit={handleSubmit}>
-                    <div className="input-group" style={{ marginBottom: '1.5rem' }}>
+                    <motion.div variants={itemVariants} className="input-group" style={{ marginBottom: '1.5rem' }}>
                         <label className="input-label">Preferred Name / Alias</label>
                         <input
                             type="text"
@@ -85,9 +106,9 @@ export default function Onboarding() {
                             onChange={(e) => setName(e.target.value)}
                             required
                         />
-                    </div>
+                    </motion.div>
 
-                    <div className="input-group" style={{ marginBottom: '2rem' }}>
+                    <motion.div variants={itemVariants} className="input-group" style={{ marginBottom: '2rem' }}>
                         <label className="input-label">Religion / Background</label>
                         <p className="text-muted" style={{ fontSize: '0.8rem', marginBottom: '8px' }}>Used for spiritually adapted CBT responses</p>
                         <select
@@ -102,16 +123,17 @@ export default function Onboarding() {
                             <option value="muslim">Muslim</option>
                             <option value="prefer_not_to_say">Prefer not to say</option>
                         </select>
-                    </div>
+                    </motion.div>
 
-                    <button
+                    <motion.button
+                        variants={itemVariants}
                         type="submit"
                         className="btn btn-primary"
                         style={{ width: '100%' }}
                         disabled={loading}
                     >
                         {loading ? 'Saving...' : 'Complete Setup'}
-                    </button>
+                    </motion.button>
                 </form>
             </motion.div>
         </div>

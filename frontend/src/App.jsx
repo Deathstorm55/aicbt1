@@ -79,10 +79,10 @@ export default function App() {
   return (
     <>
       <nav style={{ padding: '1rem', background: 'rgba(0,0,0,0.5)', borderBottom: '1px solid var(--glass-border)' }}>
-        <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h1 className="text-secondary" style={{ fontSize: '1.25rem' }}>AI Therapist</h1>
+        <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+          <h1 className="text-secondary" style={{ fontSize: '1.25rem', margin: 0 }}>AI Therapist</h1>
           {currentUser && (
-            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
               <button
                 className="btn-ghost"
                 onClick={() => window.location.href = '/chat'}

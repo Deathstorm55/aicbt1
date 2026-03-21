@@ -5,7 +5,7 @@ import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
     LineChart, Line, Legend
 } from 'recharts';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function AdminDashboard() {
     const { currentUser, userData, supabase, logout } = useAuth();
@@ -20,8 +20,6 @@ export default function AdminDashboard() {
             if (!supabase || !currentUser) return;
 
             try {
-                // We use supabase.functions.invoke to call our secure edge function.
-                // It automatically passes the current user's Auth header.
                 const { data, error: fnError } = await supabase.functions.invoke('admin-metrics', {
                     method: 'POST'
                 });
@@ -64,7 +62,6 @@ export default function AdminDashboard() {
 
     const { metrics, scoreDistribution, moodTrends } = dashboardData;
 
-    // Formatting distribution for Recharts
     const distributionData = [
         { name: 'Minimal (0-4)', count: scoreDistribution.minimal, fill: '#81c784' },
         { name: 'Mild (5-9)', count: scoreDistribution.mild, fill: '#dce775' },
@@ -73,61 +70,78 @@ export default function AdminDashboard() {
         { name: 'Severe (20+)', count: scoreDistribution.severe, fill: '#e57373' },
     ];
 
+    const containerVariants = {
+        hidden: { opacity: 0 },
+        show: {
+            opacity: 1,
+            transition: { staggerChildren: 0.1 }
+        }
+    };
+
+    const itemVariants = {
+        hidden: { opacity: 0, y: 20 },
+        show: { opacity: 1, y: 0 }
+    };
+
     return (
-        <div className="container" style={{ paddingTop: '2rem', paddingBottom: '4rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+        <div className="container" style={{ paddingTop: '2rem', paddingBottom: '4rem', paddingLeft: '1rem', paddingRight: '1rem' }}>
+            <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-8">
                 <div>
-                    <h2>Admin Portal</h2>
-                    <p className="text-muted">Global User Metrics & Analytics</p>
+                    <h2 className="text-2xl font-bold">Admin Portal</h2>
+                    <p className="text-muted text-sm">Global User Metrics & Analytics</p>
                 </div>
-                <div style={{ display: 'flex', gap: '1rem' }}>
-                    <button onClick={() => navigate('/')} className="btn-ghost" style={{ padding: '0.5rem 1rem' }}>User View</button>
-                    <button onClick={logout} className="btn-ghost" style={{ padding: '0.5rem 1rem' }}>Sign Out</button>
+                <div className="flex gap-3">
+                    <button onClick={() => navigate('/')} className="btn-ghost px-4 py-2">User View</button>
+                    <button onClick={logout} className="btn-ghost px-4 py-2">Sign Out</button>
                 </div>
             </div>
 
             {/* KPIs */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '3rem' }}>
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-panel text-center">
-                    <h4 className="text-secondary" style={{ marginBottom: '0.5rem' }}>Total Users</h4>
-                    <span style={{ fontSize: '2.5rem', fontWeight: 'bold' }}>{metrics.totalUsers}</span>
+            <motion.div
+                variants={containerVariants}
+                initial="hidden"
+                animate="show"
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-12"
+            >
+                <motion.div variants={itemVariants} className="glass-panel text-center">
+                    <h4 className="text-secondary text-sm mb-2">Total Users</h4>
+                    <span className="text-4xl font-bold">{metrics.totalUsers}</span>
                 </motion.div>
 
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-panel text-center">
-                    <h4 className="text-secondary" style={{ marginBottom: '0.5rem', fontSize: '0.9rem' }}>Active Users (7d)</h4>
-                    <span style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--primary)' }}>{metrics.activeUsersCount}</span>
+                <motion.div variants={itemVariants} className="glass-panel text-center">
+                    <h4 className="text-secondary text-sm mb-2">Active Users (7d)</h4>
+                    <span className="text-4xl font-bold text-primary">{metrics.activeUsersCount}</span>
                 </motion.div>
 
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="glass-panel text-center">
-                    <h4 className="text-secondary" style={{ marginBottom: '0.5rem', fontSize: '0.9rem' }}>Avg Chat Msgs / User</h4>
-                    <span style={{ fontSize: '2.5rem', fontWeight: 'bold' }}>{metrics.averageChatbotUsage}</span>
+                <motion.div variants={itemVariants} className="glass-panel text-center">
+                    <h4 className="text-secondary text-sm mb-2">Avg Messages/User</h4>
+                    <span className="text-4xl font-bold">{metrics.averageChatbotUsage}</span>
                 </motion.div>
 
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="glass-panel text-center">
-                    <h4 className="text-secondary" style={{ marginBottom: '0.5rem' }}>Avg PHQ-9 Score</h4>
-                    <span style={{ fontSize: '2.5rem', fontWeight: 'bold' }}>{metrics.averagePhq9}</span>
+                <motion.div variants={itemVariants} className="glass-panel text-center">
+                    <h4 className="text-secondary text-sm mb-2">Avg PHQ-9</h4>
+                    <span className="text-4xl font-bold">{metrics.averagePhq9}</span>
                 </motion.div>
 
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="glass-panel text-center" style={{ border: metrics.crisisCount > 0 ? '1px solid #ff6b6b' : undefined }}>
-                    <h4 style={{ color: metrics.crisisCount > 0 ? '#ff6b6b' : 'var(--secondary)', marginBottom: '0.5rem' }}>In Crisis</h4>
-                    <span style={{ fontSize: '2.5rem', fontWeight: 'bold', color: metrics.crisisCount > 0 ? '#ff6b6b' : 'inherit' }}>
+                <motion.div variants={itemVariants} className="glass-panel text-center" style={{ border: metrics.crisisCount > 0 ? '1px solid #ff6b6b' : undefined }}>
+                    <h4 className="text-sm mb-2" style={{ color: metrics.crisisCount > 0 ? '#ff6b6b' : 'var(--secondary)' }}>In Crisis</h4>
+                    <span className="text-4xl font-bold" style={{ color: metrics.crisisCount > 0 ? '#ff6b6b' : 'inherit' }}>
                         {metrics.crisisCount}
                     </span>
                 </motion.div>
-            </div>
+            </motion.div>
 
             {/* Charts Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '3rem' }}>
-
+            <div className="grid grid-cols-1 gap-8">
                 {/* Score Distribution Chart */}
-                <div className="glass-panel">
-                    <h3 className="text-secondary" style={{ marginBottom: '1.5rem' }}>PHQ-9 Severity Distribution</h3>
-                    <div style={{ width: '100%', height: 350 }}>
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="glass-panel">
+                    <h3 className="text-secondary text-lg font-semibold mb-6">PHQ-9 Severity Distribution</h3>
+                    <div className="w-full h-[350px]">
                         <ResponsiveContainer>
                             <BarChart data={distributionData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                                <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={12} />
-                                <YAxis stroke="var(--text-muted)" allowDecimals={false} />
+                                <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={10} tick={{ fill: 'rgba(255,255,255,0.5)' }} />
+                                <YAxis stroke="var(--text-muted)" allowDecimals={false} tick={{ fill: 'rgba(255,255,255,0.5)' }} />
                                 <RechartsTooltip
                                     contentStyle={{ backgroundColor: 'rgba(20,20,30,0.9)', border: '1px solid var(--glass-border)', borderRadius: '8px', color: 'white' }}
                                 />
@@ -135,18 +149,18 @@ export default function AdminDashboard() {
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
-                </div>
+                </motion.div>
 
                 {/* Mood Trends Line Chart */}
-                <div className="glass-panel">
-                    <h3 className="text-secondary" style={{ marginBottom: '1.5rem' }}>Aggregated Mood Trends (Last 14 Days)</h3>
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} className="glass-panel">
+                    <h3 className="text-secondary text-lg font-semibold mb-6">Aggregated Mood Trends (Last 14 Days)</h3>
                     {moodTrends && moodTrends.length > 0 ? (
-                        <div style={{ width: '100%', height: 350 }}>
+                        <div className="w-full h-[350px]">
                             <ResponsiveContainer>
                                 <LineChart data={moodTrends} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                                    <XAxis dataKey="date" stroke="var(--text-muted)" fontSize={12} />
-                                    <YAxis stroke="var(--text-muted)" allowDecimals={false} />
+                                    <XAxis dataKey="date" stroke="var(--text-muted)" fontSize={10} tick={{ fill: 'rgba(255,255,255,0.5)' }} />
+                                    <YAxis stroke="var(--text-muted)" allowDecimals={false} tick={{ fill: 'rgba(255,255,255,0.5)' }} />
                                     <RechartsTooltip
                                         contentStyle={{ backgroundColor: 'rgba(20,20,30,0.9)', border: '1px solid var(--glass-border)', borderRadius: '8px', color: 'white' }}
                                     />
@@ -160,10 +174,9 @@ export default function AdminDashboard() {
                             </ResponsiveContainer>
                         </div>
                     ) : (
-                        <p className="text-muted">Not enough mood log data to display trends.</p>
+                        <p className="text-muted text-center py-20 italic text-sm">Not enough mood log data to display trends.</p>
                     )}
-                </div>
-
+                </motion.div>
             </div>
         </div>
     );

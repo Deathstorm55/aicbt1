@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import CryptoJS from 'crypto-js';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const ENCRYPTION_KEY = import.meta.env.VITE_ENCRYPTION_KEY || 'my-secret-key-123';
 const decrypt = (encryptedText) => {
@@ -12,6 +13,7 @@ const decrypt = (encryptedText) => {
         return "";
     }
 };
+
 const PHQ9_QUESTIONS = [
     "Little interest or pleasure in doing things",
     "Feeling down, depressed, or hopeless",
@@ -67,7 +69,6 @@ export default function PHQ9Form() {
 
             let ai_insights = null;
 
-            // Fetch recent mood logs
             const { data: moodLogs } = await supabase
                 .from('mood_logs')
                 .select('mood, created_at')
@@ -75,7 +76,6 @@ export default function PHQ9Form() {
                 .order('created_at', { ascending: false })
                 .limit(7);
 
-            // Fetch recent chat history
             const { data: chatHistoryData } = await supabase
                 .from('chat_messages')
                 .select('encrypted_message, encrypted_response, created_at')
@@ -99,7 +99,6 @@ export default function PHQ9Form() {
                     moodLogs: moodLogs?.map(m => ({ mood: m.mood, date: m.created_at })) || [],
                     chatHistory: decodedChatHistory,
                     religion: userData.religion || 'prefer_not_to_say'
-
                 }
             });
 
@@ -121,9 +120,9 @@ export default function PHQ9Form() {
             if (updateError) throw updateError;
 
             if (isCrisis) {
-                alert("CRISIS EXCLUSION PROTOCOL TRIGGERED: Please seek immediate professional emergency assistance. Recommended hotlines:\n- SURPIN: 0908 021 7555\n- Mentally Aware Nigeria: 0809 111 6264");
+                alert("CRISIS EXCLUSION PROTOCOL TRIGGERED: Please seek immediate professional emergency assistance.");
             } else if (score <= 4) {
-                alert("Based on your assessment, your symptoms are minimal. The AI therapy chatbot is optimized for mild to moderate symptoms.");
+                alert("Assessment complete. Your symptoms appear minimal.");
             }
 
             await refreshUserData();
@@ -135,23 +134,46 @@ export default function PHQ9Form() {
         setLoading(false);
     };
 
-    return (
-        <div className="container" style={{ paddingTop: '2rem', paddingBottom: '4rem' }}>
-            <div className="glass-panel animate-fade-in" style={{ maxWidth: '800px', margin: '0 auto' }}>
-                <h2 className="text-primary" style={{ marginBottom: '1rem' }}>Patient Health Questionnaire (PHQ-9)</h2>
-                <p className="text-muted" style={{ marginBottom: '2rem' }}>
-                    Over the last 2 weeks, how often have you been bothered by any of the following problems?
-                </p>
+    const containerVariants = {
+        hidden: { opacity: 0 },
+        visible: {
+            opacity: 1,
+            transition: { staggerChildren: 0.1, delayChildren: 0.2 }
+        }
+    };
 
-                {error && <div style={{ background: 'rgba(255,0,0,0.1)', color: '#ff6b6b', padding: '1rem', marginBottom: '1rem', borderRadius: '8px' }}>{error}</div>}
+    const itemVariants = {
+        hidden: { opacity: 0, y: 20 },
+        visible: { opacity: 1, y: 0 }
+    };
+
+    return (
+        <div className="container" style={{ paddingTop: '2rem', paddingBottom: '4rem', paddingLeft: '1rem', paddingRight: '1rem' }}>
+            <motion.div
+                className="glass-panel"
+                style={{ maxWidth: '800px', margin: '0 auto' }}
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+            >
+                <motion.h2 variants={itemVariants} className="text-primary" style={{ marginBottom: '1rem' }}>Patient Health Questionnaire (PHQ-9)</motion.h2>
+                <motion.p variants={itemVariants} className="text-muted" style={{ marginBottom: '2rem' }}>
+                    Over the last 2 weeks, how often have you been bothered by any of the following problems?
+                </motion.p>
+
+                {error && <motion.div variants={itemVariants} style={{ background: 'rgba(255,0,0,0.1)', color: '#ff6b6b', padding: '1rem', marginBottom: '1rem', borderRadius: '8px' }}>{error}</motion.div>}
 
                 <form onSubmit={handleSubmit}>
                     {PHQ9_QUESTIONS.map((question, index) => (
-                        <div key={index} style={{ marginBottom: '2rem', borderBottom: '1px solid var(--glass-border)', paddingBottom: '1.5rem' }}>
+                        <motion.div
+                            key={index}
+                            variants={itemVariants}
+                            style={{ marginBottom: '2rem', borderBottom: '1px solid var(--glass-border)', paddingBottom: '1.5rem' }}
+                        >
                             <p style={{ fontWeight: '500', marginBottom: '1rem' }}>
                                 {index + 1}. {question}
                             </p>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem' }}>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                                 {OPTIONS.map(opt => (
                                     <label
                                         key={opt.value}
@@ -174,20 +196,20 @@ export default function PHQ9Form() {
                                             onChange={() => handleSelect(index, opt.value)}
                                             style={{ marginRight: '0.5rem' }}
                                         />
-                                        {opt.label}
+                                        <span style={{ fontSize: '0.875rem' }}>{opt.label}</span>
                                     </label>
                                 ))}
                             </div>
-                        </div>
+                        </motion.div>
                     ))}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <motion.div variants={itemVariants} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '2rem' }}>
                         <button type="button" className="btn-ghost" onClick={logout}>Sign Out</button>
                         <button type="submit" className="btn btn-primary" disabled={loading}>
                             {loading ? 'Submitting...' : 'Submit Assessment'}
                         </button>
-                    </div>
+                    </motion.div>
                 </form>
-            </div>
+            </motion.div>
         </div>
     );
 }
