@@ -4,6 +4,7 @@
   },
   "dependencies": {
     "crypto-js": "^4.2.0",
-    "framer-motion": "^12.35.2"
+    "framer-motion": "^12.35.2",
+    "recharts": "^3.8.0"
   }
 }

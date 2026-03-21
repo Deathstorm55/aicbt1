@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard';
 import Chat from './pages/Chat';
 import PHQ9Form from './components/PHQ9Form';
 import Onboarding from './pages/Onboarding';
+import AdminDashboard from './pages/AdminDashboard';
 import { UserButton, SignedIn } from '@clerk/clerk-react';
 
 function PrivateRoute({ children }) {
@@ -59,6 +60,19 @@ function OnboardingRoute({ children }) {
   return children;
 }
 
+function AdminRoute({ children }) {
+  const { currentUser, userData } = useAuth();
+  if (!currentUser) return <Navigate to="/auth" />;
+  if (!userData) return <Navigate to="/onboarding" />;
+
+  const ADMIN_EMAILS = ['ifeadeniyi8@gmail.com', 'hifeadeniyi@gmail.com'];
+  if (!ADMIN_EMAILS.includes(userData.email)) {
+    return <Navigate to="/" />;
+  }
+
+  return children;
+}
+
 export default function App() {
   const { currentUser } = useAuth();
 
@@ -83,6 +97,14 @@ export default function App() {
               >
                 Dashboard
               </button>
+              {userData && ['ifeadeniyi8@gmail.com', 'hifeadeniyi@gmail.com'].includes(userData.email) && (
+                <button
+                  onClick={() => window.location.href = '/admin'}
+                  style={{ padding: '0.5rem 1rem', borderRadius: '8px', background: 'var(--primary)', color: '#000', fontWeight: 'bold' }}
+                >
+                  Admin Portal
+                </button>
+              )}
               <SignedIn>
                 <UserButton />
               </SignedIn>
@@ -96,6 +118,7 @@ export default function App() {
           <Route path="/auth" element={<PublicRoute><Auth /></PublicRoute>} />
           <Route path="/onboarding" element={<OnboardingRoute><Onboarding /></OnboardingRoute>} />
           <Route path="/assessment" element={<AssessmentRoute><PHQ9Form /></AssessmentRoute>} />
+          <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
           <Route path="/" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
           <Route path="/chat" element={<ChatRoute><Chat /></ChatRoute>} />
         </Routes>
