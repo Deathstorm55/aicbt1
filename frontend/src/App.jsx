@@ -7,6 +7,7 @@ import Chat from './pages/Chat';
 import PHQ9Form from './components/PHQ9Form';
 import Onboarding from './pages/Onboarding';
 import AdminDashboard from './pages/AdminDashboard';
+import { TextShimmerColor } from './components/ui/demo';
 import { UserButton, SignedIn } from '@clerk/clerk-react';
 
 function PrivateRoute({ children }) {
@@ -119,6 +120,7 @@ export default function App() {
           <Route path="/onboarding" element={<OnboardingRoute><Onboarding /></OnboardingRoute>} />
           <Route path="/assessment" element={<AssessmentRoute><PHQ9Form /></AssessmentRoute>} />
           <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+          <Route path="/shimmer-demo" element={<div className="container" style={{ padding: '4rem' }}><TextShimmerColor /></div>} />
           <Route path="/" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
           <Route path="/chat" element={<ChatRoute><Chat /></ChatRoute>} />
         </Routes>
