@@ -5,6 +5,7 @@ import './index.css';
 import { AuthProvider } from './contexts/AuthContext.jsx';
 import { BrowserRouter } from 'react-router-dom';
 import { ClerkProvider } from '@clerk/clerk-react';
+import { Analytics } from '@vercel/analytics/react';
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
@@ -18,6 +19,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       <BrowserRouter>
         <AuthProvider>
           <App />
+          <Analytics />
         </AuthProvider>
       </BrowserRouter>
     </ClerkProvider>
