@@ -1,31 +1,35 @@
+@import "tailwindcss";
+
 :root {
   /* Colors */
-  --primary: #5B0E14; /* Deep Burgundy Red */
+  --primary: #5B0E14;
+  /* Deep Burgundy Red */
   --primary-light: #7E151E;
-  --secondary: #F1E194; /* Soft Gold/Yellow */
+  --secondary: #F1E194;
+  /* Soft Gold/Yellow */
   --secondary-light: #F6EDB9;
-  
+
   --bg-gradient-start: #1A0406;
   --bg-gradient-end: #0A0202;
-  
+
   --text-main: #FFFFFF;
   --text-muted: #A39D9D;
   --text-dark: #1F1F1F;
-  
+
   --glass-bg: rgba(255, 255, 255, 0.03);
   --glass-border: rgba(255, 255, 255, 0.08);
   --glass-glow: rgba(91, 14, 20, 0.4);
-  
+
   /* Typography */
   --font-heading: 'Outfit', sans-serif;
   --font-body: 'Inter', sans-serif;
-  
+
   /* Radii */
   --radius-sm: 8px;
   --radius-md: 16px;
   --radius-lg: 24px;
   --radius-full: 9999px;
-  
+
   /* Shadows */
   --shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.1);
   --shadow-md: 0 10px 30px rgba(0, 0, 0, 0.2);
@@ -47,7 +51,12 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--font-heading);
   font-weight: 600;
   letter-spacing: -0.02em;
@@ -156,8 +165,15 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Animations */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .animate-fade-in {
@@ -178,6 +194,21 @@ h1, h2, h3, h4, h5, h6 {
   justify-content: center;
 }
 
-.text-center { text-align: center; }
-.text-primary { color: var(--primary); }
-.text-secondary { color: var(--secondary); }
+.text-center {
+  text-align: center;
+}
+
+.text-primary {
+  color: var(--primary);
+}
+
+.text-secondary {
+  color: var(--secondary);
+}
+
+.lab-bg::before {
+  overflow: hidden;
+  max-width: 100vw;
+  max-height: 100vh;
+  box-sizing: border-box;
+}
