@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import CryptoJS from 'crypto-js';
 import { motion, AnimatePresence } from 'framer-motion';
+import { usePopup } from '../contexts/PopupContext';
 
 const ENCRYPTION_KEY = import.meta.env.VITE_ENCRYPTION_KEY || 'my-secret-key-123';
 const decrypt = (encryptedText) => {
@@ -35,6 +36,7 @@ const OPTIONS = [
 
 export default function PHQ9Form() {
     const { userData, logout, refreshUserData, supabase } = useAuth();
+    const { showPopup } = usePopup();
     const navigate = useNavigate();
     const [answers, setAnswers] = useState(Array(9).fill(null));
     const [loading, setLoading] = useState(false);
@@ -118,13 +120,33 @@ export default function PHQ9Form() {
             if (updateError) throw updateError;
 
             if (isCrisis) {
-                alert("Your score indicates severe symptoms. We strongly recommend seeking immediate professional help. You still have access to the chatbot, but please prioritize speaking with a healthcare professional.");
+                showPopup({
+                    type: 'error',
+                    title: 'Urgent: Professional Help Needed',
+                    message: "Your score indicates severe symptoms. We strongly recommend seeking immediate professional help. You still have access to the chatbot, but please prioritize speaking with a healthcare professional.",
+                    duration: 15000
+                });
             } else if (hasSuicidalIdeation) {
-                alert("We noticed your response to question 9. Please know that support is available:\n\n- SURPIN: 0908 021 7555\n- Mentally Aware Nigeria: 0809 111 6264\n- She Writes Woman: 0800 800 2000\n\nYou can still use the chatbot, and a reminder will appear on your dashboard.");
+                showPopup({
+                    type: 'warning',
+                    title: 'Support is available',
+                    message: "We noticed your response to question 9. Please know that support is available:\n- SURPIN: 0908 021 7555\n- Mentally Aware Nigeria: 0809 111 6264\n- She Writes Woman: 0800 800 2000\n\nYou can still use the chatbot, and a reminder will appear on your dashboard.",
+                    duration: 15000
+                });
             } else if (score >= 15) {
-                alert("Your score suggests moderately severe symptoms. You have full chatbot access, but we encourage you to also seek support from a mental health professional.");
+                showPopup({
+                    type: 'info',
+                    title: 'Professional Support Recommended',
+                    message: "Your score suggests moderately severe symptoms. You have full chatbot access, but we encourage you to also seek support from a mental health professional.",
+                    duration: 10000
+                });
             } else if (score <= 4) {
-                alert("Assessment complete. Your symptoms appear minimal.");
+                showPopup({
+                    type: 'success',
+                    title: 'Assessment Complete',
+                    message: "Your symptoms appear minimal.",
+                    duration: 5000
+                });
             }
 
             await refreshUserData();

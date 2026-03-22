@@ -3,13 +3,14 @@ import { useNavigate } from 'react-router-dom';
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
+import { usePopup } from '../contexts/PopupContext';
 import { useUser } from '@clerk/clerk-react';
 
 export default function Onboarding() {
     const [name, setName] = useState('');
     const [religion, setReligion] = useState('');
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
+    const { showPopup } = usePopup();
 
     const navigate = useNavigate();
     const { user } = useUser();
@@ -38,10 +39,9 @@ export default function Onboarding() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError('');
 
         if (!name || !religion) {
-            setError('Please fill out all fields.');
+            showPopup({ type: 'warning', title: 'Missing Fields', message: 'Please fill out all fields.', duration: 5000 });
             return;
         }
 
@@ -64,10 +64,11 @@ export default function Onboarding() {
             }
 
             await refreshUserData();
+            showPopup({ type: 'success', title: 'Welcome', message: 'Your profile has been created.', duration: 5000 });
             navigate('/');
         } catch (err) {
             console.error("Onboarding error:", err);
-            setError(err.message || 'An error occurred during onboarding.');
+            showPopup({ type: 'error', title: 'Setup Failed', message: err.message || 'An error occurred during onboarding.', duration: 6000 });
         } finally {
             setLoading(false);
         }
@@ -88,12 +89,6 @@ export default function Onboarding() {
                 <motion.p variants={itemVariants} className="text-center text-muted" style={{ marginBottom: '2rem' }}>
                     Let's set up your profile for personalized support.
                 </motion.p>
-
-                {error && (
-                    <motion.div variants={itemVariants} style={{ background: 'rgba(255,0,0,0.1)', color: '#ff6b6b', padding: '0.75rem', borderRadius: '8px', marginBottom: '1.5rem', border: '1px solid rgba(255,0,0,0.2)', fontSize: '0.875rem' }}>
-                        {error}
-                    </motion.div>
-                )}
 
                 <form onSubmit={handleSubmit}>
                     <motion.div variants={itemVariants} className="input-group" style={{ marginBottom: '1.5rem' }}>

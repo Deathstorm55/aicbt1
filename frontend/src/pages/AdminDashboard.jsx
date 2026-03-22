@@ -6,14 +6,15 @@ import {
     LineChart, Line, Legend
 } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
+import { usePopup } from '../contexts/PopupContext';
 
 export default function AdminDashboard() {
     const { currentUser, userData, supabase, logout } = useAuth();
     const navigate = useNavigate();
 
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
     const [dashboardData, setDashboardData] = useState(null);
+    const { showPopup } = usePopup();
 
     useEffect(() => {
         const fetchMetrics = async () => {
@@ -31,31 +32,25 @@ export default function AdminDashboard() {
                 setDashboardData(data);
             } catch (err) {
                 console.error("Admin dashboard fetch error:", err);
-                setError(err.message || "Unauthorized access.");
+                showPopup({
+                    type: 'error',
+                    title: 'Access Denied',
+                    message: err.message || "Unauthorized access.",
+                    duration: 5000
+                });
+                navigate('/');
             } finally {
                 setLoading(false);
             }
         };
 
         fetchMetrics();
-    }, [supabase, currentUser]);
+    }, [supabase, currentUser, navigate, showPopup]);
 
-    if (loading) {
+    if (loading || !dashboardData) {
         return (
             <div className="container" style={{ padding: '4rem 0', textAlign: 'center' }}>
                 <p className="text-muted">Loading administrative metrics...</p>
-            </div>
-        );
-    }
-
-    if (error || !dashboardData) {
-        return (
-            <div className="container" style={{ padding: '4rem 0', textAlign: 'center' }}>
-                <h2 style={{ color: '#e53935', marginBottom: '1rem' }}>Access Denied</h2>
-                <p className="text-muted">{error}</p>
-                <button onClick={() => navigate('/')} className="btn btn-primary" style={{ marginTop: '2rem' }}>
-                    Return to Dashboard
-                </button>
             </div>
         );
     }

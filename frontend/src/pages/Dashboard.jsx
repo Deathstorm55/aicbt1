@@ -2,52 +2,17 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
+import { usePopup } from '../contexts/PopupContext';
 import MoodReminderPopup from '../components/MoodReminderPopup';
-
-const Toast = ({ message, type, onClose }) => {
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            onClose();
-        }, 3000);
-        return () => clearTimeout(timer);
-    }, [onClose]);
-
-    return (
-        <motion.div
-            initial={{ opacity: 0, y: 50, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            style={{
-                position: 'fixed',
-                bottom: '2rem',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                background: type === 'error' ? 'rgba(229, 57, 53, 0.9)' : 'rgba(76, 175, 80, 0.9)',
-                color: 'white',
-                padding: '1rem 2rem',
-                borderRadius: '99px',
-                boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
-                zIndex: 1000,
-                backdropFilter: 'blur(10px)',
-                fontWeight: '500',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem'
-            }}
-        >
-            {message}
-        </motion.div>
-    );
-};
 
 export default function Dashboard() {
     const { currentUser, userData, logout, supabase } = useAuth();
     const navigate = useNavigate();
+    const { showPopup } = usePopup();
     const [mood, setMood] = useState('');
     const [logging, setLogging] = useState(false);
     const [dailyVerse, setDailyVerse] = useState('');
     const [loadingVerse, setLoadingVerse] = useState(false);
-    const [toast, setToast] = useState(null); // { message, type }
     const [logsTodayCount, setLogsTodayCount] = useState(0);
 
     useEffect(() => {
@@ -151,7 +116,7 @@ export default function Dashboard() {
         if (!mood || !supabase || !currentUser) return;
 
         if (logsTodayCount >= 2) {
-            setToast({ message: 'You have already logged your mood twice today (Morning & Evening).', type: 'error' });
+            showPopup({ title: 'Daily Limit Reached', message: 'You have already logged your mood twice today (Morning & Evening).', type: 'warning' });
             return;
         }
 
@@ -169,11 +134,11 @@ export default function Dashboard() {
             if (error) throw error;
 
             setLogsTodayCount(prev => prev + 1);
-            setToast({ message: 'Mood logged successfully!', type: 'success' });
+            showPopup({ title: 'Success', message: 'Mood logged successfully!', type: 'success' });
             setMood('');
         } catch (err) {
             console.error(err);
-            setToast({ message: 'Failed to log mood.', type: 'error' });
+            showPopup({ title: 'Error', message: 'Failed to log mood.', type: 'error' });
         }
         setLogging(false);
     };
@@ -195,12 +160,6 @@ export default function Dashboard() {
 
     return (
         <div className="container" style={{ paddingTop: '2rem', paddingBottom: '2rem' }}>
-            <AnimatePresence>
-                {toast && (
-                    <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
-                )}
-            </AnimatePresence>
-
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
                 <h2>Your Dashboard</h2>
                 <button onClick={logout} className="btn-ghost" style={{ padding: '0.5rem 1rem' }}>Sign Out</button>

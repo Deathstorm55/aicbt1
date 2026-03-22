@@ -11,6 +11,8 @@ import { TextShimmerColor } from './components/ui/demo';
 import { UserButton, SignedIn } from '@clerk/clerk-react';
 import { Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { PopupProvider } from './contexts/PopupContext';
+import GlobalPopup from './components/ui/GlobalPopup';
 
 function PrivateRoute({ children }) {
   const { currentUser, userData } = useAuth();
@@ -86,7 +88,8 @@ export default function App() {
   const isAdmin = userData && ['ifeadeniyi8@gmail.com', 'hifeadeniyi@gmail.com'].includes(userData.email);
 
   return (
-    <>
+    <PopupProvider>
+      <GlobalPopup />
       <nav style={{ padding: '1rem', background: 'rgba(0,0,0,0.5)', borderBottom: '1px solid var(--glass-border)', position: 'sticky', top: 0, zIndex: 50, backdropFilter: 'blur(10px)' }}>
         <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h1 className="text-secondary" style={{ fontSize: '1.25rem', margin: 0 }}>AI Therapist</h1>
@@ -197,6 +200,6 @@ export default function App() {
           <Route path="/chat" element={<ChatRoute><Chat /></ChatRoute>} />
         </Routes>
       </main>
-    </>
+    </PopupProvider>
   );
 }
