@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
+import MoodReminderPopup from '../components/MoodReminderPopup';
 
 const Toast = ({ message, type, onClose }) => {
     useEffect(() => {
@@ -115,6 +116,20 @@ export default function Dashboard() {
         fetchMoodLogsCount();
     }, [supabase, currentUser]);
 
+    const refreshMoodCount = useCallback(async () => {
+        if (!supabase || !currentUser) return;
+        const today = new Date().toISOString().split('T')[0];
+        const startOfDay = `${today}T00:00:00.000Z`;
+        const endOfDay = `${today}T23:59:59.999Z`;
+        const { count, error } = await supabase
+            .from('mood_logs')
+            .select('*', { count: 'exact', head: true })
+            .eq('clerk_user_id', currentUser.id)
+            .gte('created_at', startOfDay)
+            .lte('created_at', endOfDay);
+        if (!error && count !== null) setLogsTodayCount(count);
+    }, [supabase, currentUser]);
+
     const getSeverity = (score) => {
         if (score <= 4) return "Minimal Depression";
         if (score <= 9) return "Mild Depression";
@@ -142,9 +157,14 @@ export default function Dashboard() {
 
         setLogging(true);
         try {
+            const hour = new Date().getHours();
+            let timeOfDay = null;
+            if (hour >= 7 && hour < 10) timeOfDay = 'morning';
+            else if (hour >= 19 && hour < 22) timeOfDay = 'evening';
+
             const { error } = await supabase
                 .from('mood_logs')
-                .insert([{ clerk_user_id: currentUser.id, mood: mood }]);
+                .insert([{ clerk_user_id: currentUser.id, mood: mood, time_of_day: timeOfDay }]);
 
             if (error) throw error;
 
@@ -194,6 +214,53 @@ export default function Dashboard() {
                     style={{ background: 'rgba(255,0,0,0.1)', border: '1px solid #ff6b6b', padding: '1.5rem', borderRadius: '8px', marginBottom: '2rem' }}>
                     <h3 style={{ color: '#ff6b6b', marginBottom: '0.5rem' }}>Important Notice</h3>
                     <p style={{ color: '#fff' }}>Your recent assessment indicates you may need more intensive support than this chatbot can provide. Please contact a professional healthcare provider or reach out to emergency services.</p>
+                </motion.div>
+            )}
+
+            {userData?.has_suicidal_ideation && (
+                <motion.div
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.1 }}
+                    style={{
+                        background: 'linear-gradient(135deg, rgba(255, 152, 0, 0.15), rgba(255, 87, 34, 0.1))',
+                        border: '1px solid rgba(255, 152, 0, 0.4)',
+                        padding: '1.5rem',
+                        borderRadius: '12px',
+                        marginBottom: '2rem'
+                    }}
+                >
+                    <h3 style={{ color: '#ffb74d', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span>📞</span> Crisis Support Available
+                    </h3>
+                    <p style={{ color: '#fff', marginBottom: '0.75rem', lineHeight: '1.6' }}>
+                        Based on your recent assessment, we want to make sure you know help is always available. Please don't hesitate to reach out:
+                    </p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        <a href="tel:09080217555" style={{ color: '#ffb74d', textDecoration: 'none', fontWeight: '600', fontSize: '0.95rem' }}>• SURPIN: 0908 021 7555</a>
+                        <a href="tel:08091116264" style={{ color: '#ffb74d', textDecoration: 'none', fontWeight: '600', fontSize: '0.95rem' }}>• Mentally Aware Nigeria: 0809 111 6264</a>
+                        <a href="tel:08008002000" style={{ color: '#ffb74d', textDecoration: 'none', fontWeight: '600', fontSize: '0.95rem' }}>• She Writes Woman: 0800 800 2000</a>
+                    </div>
+                </motion.div>
+            )}
+
+            {userData?.needs_increased_monitoring && !userData?.has_suicidal_ideation && (
+                <motion.div
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.1 }}
+                    style={{
+                        background: 'linear-gradient(135deg, rgba(33, 150, 243, 0.1), rgba(30, 136, 229, 0.08))',
+                        border: '1px solid rgba(33, 150, 243, 0.3)',
+                        padding: '1.5rem',
+                        borderRadius: '12px',
+                        marginBottom: '2rem'
+                    }}
+                >
+                    <h3 style={{ color: '#64b5f6', marginBottom: '0.5rem' }}>💙 Professional Support Recommended</h3>
+                    <p style={{ color: '#fff', lineHeight: '1.6' }}>
+                        Your assessment suggests moderately severe symptoms. While you have full access to the chatbot, we encourage you to also consider speaking with a mental health professional for additional support.
+                    </p>
                 </motion.div>
             )}
 
@@ -281,6 +348,12 @@ export default function Dashboard() {
                     </form>
                 </motion.div>
             </motion.div>
+
+            <MoodReminderPopup
+                supabase={supabase}
+                currentUser={currentUser}
+                onMoodLogged={refreshMoodCount}
+            />
         </div>
     );
 }

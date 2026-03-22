@@ -57,12 +57,8 @@ export default function PHQ9Form() {
 
         const score = answers.reduce((a, b) => a + b, 0);
         const hasSuicidalIdeation = answers[8] > 0;
-        const isCrisis = score >= 15 || hasSuicidalIdeation;
-
-        let eligible_for_chatbot = false;
-        if (score >= 5 && score <= 14 && !hasSuicidalIdeation) {
-            eligible_for_chatbot = true;
-        }
+        const isCrisis = score >= 21;
+        const eligible_for_chatbot = score >= 5 && score <= 20;
 
         try {
             if (!supabase) throw new Error("Authentication not initialized.");
@@ -113,6 +109,8 @@ export default function PHQ9Form() {
                     eligible_for_chatbot: eligible_for_chatbot,
                     last_assessment_date: new Date().toISOString(),
                     needs_crisis_intervention: isCrisis,
+                    has_suicidal_ideation: hasSuicidalIdeation,
+                    needs_increased_monitoring: score >= 15 && score <= 20,
                     ai_insights: ai_insights
                 })
                 .eq('id', userData.id);
@@ -120,7 +118,11 @@ export default function PHQ9Form() {
             if (updateError) throw updateError;
 
             if (isCrisis) {
-                alert("CRISIS EXCLUSION PROTOCOL TRIGGERED: Please seek immediate professional emergency assistance.");
+                alert("Your score indicates severe symptoms. We strongly recommend seeking immediate professional help. You still have access to the chatbot, but please prioritize speaking with a healthcare professional.");
+            } else if (hasSuicidalIdeation) {
+                alert("We noticed your response to question 9. Please know that support is available:\n\n- SURPIN: 0908 021 7555\n- Mentally Aware Nigeria: 0809 111 6264\n- She Writes Woman: 0800 800 2000\n\nYou can still use the chatbot, and a reminder will appear on your dashboard.");
+            } else if (score >= 15) {
+                alert("Your score suggests moderately severe symptoms. You have full chatbot access, but we encourage you to also seek support from a mental health professional.");
             } else if (score <= 4) {
                 alert("Assessment complete. Your symptoms appear minimal.");
             }

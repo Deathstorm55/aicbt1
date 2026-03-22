@@ -87,7 +87,6 @@ export default function Chat() {
                 if (currentUser?.id) {
                     const { error: insertError } = await supabase.from('chat_messages').insert([{
                         clerk_user_id: currentUser.id,
-                        clerk_user_id: currentUser.id,
                         encrypted_message: encryptedMessage,
                         encrypted_response: encryptedReply
                     }]);
@@ -106,6 +105,43 @@ export default function Chat() {
 
     return (
         <div className="container h-[calc(100vh-80px)]" style={{ display: 'flex', flexDirection: 'column', paddingTop: '1.5rem', paddingBottom: '1.5rem' }}>
+            {userData?.has_suicidal_ideation && (
+                <div style={{
+                    background: 'linear-gradient(135deg, rgba(255, 152, 0, 0.15), rgba(255, 87, 34, 0.1))',
+                    border: '1px solid rgba(255, 152, 0, 0.3)',
+                    padding: '0.75rem 1rem',
+                    borderRadius: '10px',
+                    marginBottom: '0.75rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.75rem',
+                    flexWrap: 'wrap',
+                    fontSize: '0.85rem'
+                }}>
+                    <span>📞</span>
+                    <span style={{ color: '#ffb74d', fontWeight: '600' }}>Crisis Support:</span>
+                    <a href="tel:09080217555" style={{ color: '#ffb74d', textDecoration: 'none' }}>SURPIN: 0908 021 7555</a>
+                    <span style={{ color: 'rgba(255,255,255,0.3)' }}>|</span>
+                    <a href="tel:08091116264" style={{ color: '#ffb74d', textDecoration: 'none' }}>MANI: 0809 111 6264</a>
+                    <span style={{ color: 'rgba(255,255,255,0.3)' }}>|</span>
+                    <a href="tel:08008002000" style={{ color: '#ffb74d', textDecoration: 'none' }}>SWW: 0800 800 2000</a>
+                </div>
+            )}
+
+            {userData?.needs_increased_monitoring && !userData?.has_suicidal_ideation && (
+                <div style={{
+                    background: 'rgba(33, 150, 243, 0.08)',
+                    border: '1px solid rgba(33, 150, 243, 0.2)',
+                    padding: '0.6rem 1rem',
+                    borderRadius: '10px',
+                    marginBottom: '0.75rem',
+                    fontSize: '0.85rem',
+                    color: '#64b5f6'
+                }}>
+                    💙 We recommend also seeking support from a mental health professional alongside using this chatbot.
+                </div>
+            )}
+
             <AnimatedAIChat
                 messages={messages}
                 onSendMessage={handleSendMessage}
