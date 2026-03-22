@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import CryptoJS from 'crypto-js';
 import { AnimatedAIChat } from '../components/ui/animated-ai-chat';
+import BarLoader from '../components/ui/bar-loader';
 
 const ENCRYPTION_KEY = import.meta.env.VITE_ENCRYPTION_KEY || 'my-secret-key-123';
 const encrypt = (text) => CryptoJS.AES.encrypt(text, ENCRYPTION_KEY).toString();
@@ -13,6 +14,10 @@ export default function Chat() {
     ]);
     const [loading, setLoading] = useState(false);
     const [moodLogs, setMoodLogs] = useState([]);
+
+    // This ref is not used in the original code, but is introduced by the user's instruction.
+    // It's typically used to scroll to the end of messages.
+    const messagesEndRef = useRef(null);
 
     useEffect(() => {
         const fetchMoodLogs = async () => {

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import CryptoJS from 'crypto-js';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePopup } from '../contexts/PopupContext';
+import { useLoading } from '../contexts/LoadingContext';
 
 const ENCRYPTION_KEY = import.meta.env.VITE_ENCRYPTION_KEY || 'my-secret-key-123';
 const decrypt = (encryptedText) => {
@@ -37,9 +38,9 @@ const OPTIONS = [
 export default function PHQ9Form() {
     const { userData, logout, refreshUserData, supabase } = useAuth();
     const { showPopup } = usePopup();
+    const { startLoading, stopLoading } = useLoading();
     const navigate = useNavigate();
     const [answers, setAnswers] = useState(Array(9).fill(null));
-    const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
     const handleSelect = (index, value) => {
@@ -55,7 +56,8 @@ export default function PHQ9Form() {
             return;
         }
         setError('');
-        setLoading(true);
+
+        startLoading('Analyzing your assessment...');
 
         const score = answers.reduce((a, b) => a + b, 0);
         const hasSuicidalIdeation = answers[8] > 0;
@@ -154,8 +156,9 @@ export default function PHQ9Form() {
         } catch (err) {
             setError("Failed to save assessment.");
             console.error(err);
+        } finally {
+            stopLoading();
         }
-        setLoading(false);
     };
 
     const containerVariants = {

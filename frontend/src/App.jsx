@@ -13,6 +13,8 @@ import { Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PopupProvider } from './contexts/PopupContext';
 import GlobalPopup from './components/ui/GlobalPopup';
+import { LoadingProvider } from './contexts/LoadingContext';
+import GlobalLoader15 from './components/ui/loader-15';
 
 function PrivateRoute({ children }) {
   const { currentUser, userData } = useAuth();
@@ -88,118 +90,121 @@ export default function App() {
   const isAdmin = userData && ['ifeadeniyi8@gmail.com', 'hifeadeniyi@gmail.com'].includes(userData.email);
 
   return (
-    <PopupProvider>
-      <GlobalPopup />
-      <nav style={{ padding: '1rem', background: 'rgba(0,0,0,0.5)', borderBottom: '1px solid var(--glass-border)', position: 'sticky', top: 0, zIndex: 50, backdropFilter: 'blur(10px)' }}>
-        <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h1 className="text-secondary" style={{ fontSize: '1.25rem', margin: 0 }}>AI Therapist</h1>
+    <LoadingProvider>
+      <PopupProvider>
+        <GlobalLoader15 />
+        <GlobalPopup />
+        <nav style={{ padding: '1rem', background: 'rgba(0,0,0,0.5)', borderBottom: '1px solid var(--glass-border)', position: 'sticky', top: 0, zIndex: 50, backdropFilter: 'blur(10px)' }}>
+          <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h1 className="text-secondary" style={{ fontSize: '1.25rem', margin: 0 }}>AI Therapist</h1>
 
-          {/* Desktop Navigation */}
-          {currentUser && (
-            <div className="desktop-only" style={{ gap: '1rem', alignItems: 'center' }}>
-              <button
-                className="btn-ghost"
-                onClick={() => window.location.href = '/chat'}
-                style={{ padding: '0.5rem 1rem', borderRadius: '8px' }}
-              >
-                Chat
-              </button>
-              <button
-                className="btn-ghost"
-                onClick={() => window.location.href = '/'}
-                style={{ padding: '0.5rem 1rem', borderRadius: '8px' }}
-              >
-                Dashboard
-              </button>
-              {isAdmin && (
+            {/* Desktop Navigation */}
+            {currentUser && (
+              <div className="desktop-only" style={{ gap: '1rem', alignItems: 'center' }}>
                 <button
-                  onClick={() => window.location.href = '/admin'}
-                  style={{ padding: '0.5rem 1rem', borderRadius: '8px', background: 'var(--primary)', color: '#fff', fontWeight: 'bold' }}
+                  className="btn-ghost"
+                  onClick={() => window.location.href = '/chat'}
+                  style={{ padding: '0.5rem 1rem', borderRadius: '8px' }}
                 >
-                  Admin Portal
-                </button>
-              )}
-              <SignedIn>
-                <UserButton />
-              </SignedIn>
-            </div>
-          )}
-
-          {/* Mobile Menu Toggle */}
-          {currentUser && (
-            <div className="mobile-only">
-              <button onClick={toggleMenu} className="btn-ghost" style={{ padding: '0.5rem', borderRadius: '8px' }}>
-                {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-              </button>
-            </div>
-          )}
-
-          {!currentUser && (
-            <button
-              className="btn-primary"
-              onClick={() => window.location.href = '/auth'}
-              style={{ padding: '0.5rem 1.5rem', borderRadius: '8px' }}
-            >
-              Log In
-            </button>
-          )}
-        </div>
-
-        {/* Mobile Navigation Menu */}
-        <AnimatePresence>
-          {isMenuOpen && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              style={{ overflow: 'hidden', background: 'rgba(10, 2, 2, 0.95)', borderTop: '1px solid var(--glass-border)' }}
-            >
-              <div className="container" style={{ padding: '1.5rem 1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--glass-border)', paddingBottom: '1rem' }}>
-                  <span className="text-muted" style={{ fontSize: '0.875rem' }}>Account</span>
-                  <SignedIn>
-                    <UserButton showName />
-                  </SignedIn>
-                </div>
-                <button
-                  className="btn-secondary"
-                  onClick={() => { window.location.href = '/chat'; setIsMenuOpen(false); }}
-                  style={{ textAlign: 'left', padding: '1rem' }}
-                >
-                  Chatbot
+                  Chat
                 </button>
                 <button
                   className="btn-ghost"
-                  onClick={() => { window.location.href = '/'; setIsMenuOpen(false); }}
-                  style={{ textAlign: 'left', padding: '1rem' }}
+                  onClick={() => window.location.href = '/'}
+                  style={{ padding: '0.5rem 1rem', borderRadius: '8px' }}
                 >
-                  Your Dashboard
+                  Dashboard
                 </button>
                 {isAdmin && (
                   <button
-                    onClick={() => { window.location.href = '/admin'; setIsMenuOpen(false); }}
-                    style={{ padding: '1rem', borderRadius: '8px', background: 'var(--primary)', color: '#fff', fontWeight: 'bold', textAlign: 'left' }}
+                    onClick={() => window.location.href = '/admin'}
+                    style={{ padding: '0.5rem 1rem', borderRadius: '8px', background: 'var(--primary)', color: '#fff', fontWeight: 'bold' }}
                   >
                     Admin Portal
                   </button>
                 )}
+                <SignedIn>
+                  <UserButton />
+                </SignedIn>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </nav>
+            )}
 
-      <main style={{ flex: 1 }}>
-        <Routes>
-          <Route path="/auth" element={<PublicRoute><Auth /></PublicRoute>} />
-          <Route path="/onboarding" element={<OnboardingRoute><Onboarding /></OnboardingRoute>} />
-          <Route path="/assessment" element={<AssessmentRoute><PHQ9Form /></AssessmentRoute>} />
-          <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-          <Route path="/shimmer-demo" element={<div className="container" style={{ padding: '4rem' }}><TextShimmerColor /></div>} />
-          <Route path="/" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-          <Route path="/chat" element={<ChatRoute><Chat /></ChatRoute>} />
-        </Routes>
-      </main>
-    </PopupProvider>
+            {/* Mobile Menu Toggle */}
+            {currentUser && (
+              <div className="mobile-only">
+                <button onClick={toggleMenu} className="btn-ghost" style={{ padding: '0.5rem', borderRadius: '8px' }}>
+                  {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                </button>
+              </div>
+            )}
+
+            {!currentUser && (
+              <button
+                className="btn-primary"
+                onClick={() => window.location.href = '/auth'}
+                style={{ padding: '0.5rem 1.5rem', borderRadius: '8px' }}
+              >
+                Log In
+              </button>
+            )}
+          </div>
+
+          {/* Mobile Navigation Menu */}
+          <AnimatePresence>
+            {isMenuOpen && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                style={{ overflow: 'hidden', background: 'rgba(10, 2, 2, 0.95)', borderTop: '1px solid var(--glass-border)' }}
+              >
+                <div className="container" style={{ padding: '1.5rem 1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--glass-border)', paddingBottom: '1rem' }}>
+                    <span className="text-muted" style={{ fontSize: '0.875rem' }}>Account</span>
+                    <SignedIn>
+                      <UserButton showName />
+                    </SignedIn>
+                  </div>
+                  <button
+                    className="btn-secondary"
+                    onClick={() => { window.location.href = '/chat'; setIsMenuOpen(false); }}
+                    style={{ textAlign: 'left', padding: '1rem' }}
+                  >
+                    Chatbot
+                  </button>
+                  <button
+                    className="btn-ghost"
+                    onClick={() => { window.location.href = '/'; setIsMenuOpen(false); }}
+                    style={{ textAlign: 'left', padding: '1rem' }}
+                  >
+                    Your Dashboard
+                  </button>
+                  {isAdmin && (
+                    <button
+                      onClick={() => { window.location.href = '/admin'; setIsMenuOpen(false); }}
+                      style={{ padding: '1rem', borderRadius: '8px', background: 'var(--primary)', color: '#fff', fontWeight: 'bold', textAlign: 'left' }}
+                    >
+                      Admin Portal
+                    </button>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </nav>
+
+        <main style={{ flex: 1 }}>
+          <Routes>
+            <Route path="/auth" element={<PublicRoute><Auth /></PublicRoute>} />
+            <Route path="/onboarding" element={<OnboardingRoute><Onboarding /></OnboardingRoute>} />
+            <Route path="/assessment" element={<AssessmentRoute><PHQ9Form /></AssessmentRoute>} />
+            <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+            <Route path="/shimmer-demo" element={<div className="container" style={{ padding: '4rem' }}><TextShimmerColor /></div>} />
+            <Route path="/" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+            <Route path="/chat" element={<ChatRoute><Chat /></ChatRoute>} />
+          </Routes>
+        </main>
+      </PopupProvider>
+    </LoadingProvider>
   );
 }

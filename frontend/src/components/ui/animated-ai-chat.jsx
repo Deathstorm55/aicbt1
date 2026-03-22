@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import * as React from "react";
+import BarLoader from "./bar-loader";
 
 function useAutoResizeTextarea({ minHeight, maxHeight }) {
     const textareaRef = useRef(null);
@@ -220,7 +221,7 @@ export function AnimatedAIChat({
                         >
                             <div className="bg-white/5 backdrop-blur-sm px-4 py-2.5 rounded-2xl rounded-tl-none border border-white/5 flex items-center gap-2">
                                 <span className="text-xs text-secondary/60 italic font-medium">Assistant thinking</span>
-                                <TypingDots />
+                                <BarLoader />
                             </div>
                         </motion.div>
                     )}

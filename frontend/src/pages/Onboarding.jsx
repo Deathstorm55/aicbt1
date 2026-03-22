@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-// eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { usePopup } from '../contexts/PopupContext';
+import { useLoading } from '../contexts/LoadingContext';
 import { useUser } from '@clerk/clerk-react';
 
 export default function Onboarding() {
     const [name, setName] = useState('');
     const [religion, setReligion] = useState('');
-    const [loading, setLoading] = useState(false);
     const { showPopup } = usePopup();
+    const { startLoading, stopLoading } = useLoading();
 
     const navigate = useNavigate();
     const { user } = useUser();
@@ -45,7 +45,7 @@ export default function Onboarding() {
             return;
         }
 
-        setLoading(true);
+        startLoading('Setting up your profile...');
 
         try {
             if (!supabase) throw new Error("Authentication not ready. Please try again.");
@@ -70,7 +70,7 @@ export default function Onboarding() {
             console.error("Onboarding error:", err);
             showPopup({ type: 'error', title: 'Setup Failed', message: err.message || 'An error occurred during onboarding.', duration: 6000 });
         } finally {
-            setLoading(false);
+            stopLoading();
         }
     };
 
@@ -125,9 +125,8 @@ export default function Onboarding() {
                         type="submit"
                         className="btn btn-primary"
                         style={{ width: '100%' }}
-                        disabled={loading}
                     >
-                        {loading ? 'Saving...' : 'Complete Setup'}
+                        Complete Setup
                     </motion.button>
                 </form>
             </motion.div>

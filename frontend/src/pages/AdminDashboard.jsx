@@ -7,6 +7,7 @@ import {
 } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePopup } from '../contexts/PopupContext';
+import BarLoader from '../components/ui/bar-loader';
 
 export default function AdminDashboard() {
     const { currentUser, userData, supabase, logout } = useAuth();
@@ -49,8 +50,8 @@ export default function AdminDashboard() {
 
     if (loading || !dashboardData) {
         return (
-            <div className="container" style={{ padding: '4rem 0', textAlign: 'center' }}>
-                <p className="text-muted">Loading administrative metrics...</p>
+            <div className="container" style={{ padding: '8rem 0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <BarLoader message="Loading administrative metrics..." />
             </div>
         );
     }
