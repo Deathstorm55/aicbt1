@@ -105,7 +105,7 @@ h6 {
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-md);
-  padding: 1.5rem;
+  padding: 1.25rem;
 }
 
 @media (min-width: 768px) {

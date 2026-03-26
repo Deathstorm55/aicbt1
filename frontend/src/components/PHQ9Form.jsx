@@ -121,6 +121,14 @@ export default function PHQ9Form() {
 
             if (updateError) throw updateError;
 
+            // Store assessment in PHQ-9 history for longitudinal tracking
+            await supabase.from('phq9_history').insert([{
+                clerk_user_id: userData.clerk_user_id || userData.id,
+                score: score,
+                answers: answers,
+                ai_insights: ai_insights
+            }]);
+
             if (isCrisis) {
                 showPopup({
                     type: 'error',

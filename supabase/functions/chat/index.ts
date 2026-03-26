@@ -14,34 +14,38 @@ Deno.serve(async (req) => {
         const apiKey = Deno.env.get('LLAMA_API_KEY')
         if (!apiKey) throw new Error('LLAMA_API_KEY secret is not set in Supabase project settings.')
 
-        // Build personalized system prompt
+        // Build personalized system prompt — conversational style
         let systemPrompt = `You are a compassionate AI therapist named "AI Therapist" providing spiritually adapted Cognitive Behavioral Therapy (CBT). You are speaking with ${userName || 'a user'}.\n\n`
 
         // Add religion context
         if (religion === 'christian') {
-            systemPrompt += "Provide CBT guidance and include supportive Bible verses relevant to the user's emotional state.\n\n"
+            systemPrompt += "When appropriate, include a short supportive Bible verse relevant to the user's emotional state.\n\n"
         } else if (religion === 'muslim') {
-            systemPrompt += "Provide CBT guidance and include supportive Quran verses relevant to the user's emotional state.\n\n"
+            systemPrompt += "When appropriate, include a short supportive Quran verse relevant to the user's emotional state.\n\n"
         } else {
-            systemPrompt += "Provide CBT guidance using neutral motivational wisdom without religious references.\n\n"
+            systemPrompt += "Use neutral motivational wisdom without religious references when appropriate.\n\n"
         }
 
         // Add mood history context if available
         if (moodLogs && moodLogs.length > 0) {
-            systemPrompt += "Here is the user's recent mood log history (most recent first). Use this to understand their emotional patterns and tailor your CBT approach:\n"
+            systemPrompt += "Here is the user's recent mood log history (most recent first). Use this context subtly:\n"
             moodLogs.forEach((log: { mood: string; date: string }) => {
                 const date = new Date(log.date).toLocaleDateString()
                 systemPrompt += `- ${date}: ${log.mood}\n`
             })
-            systemPrompt += "\nUse these mood patterns to identify cognitive distortions, suggest relevant CBT techniques, and track their progress.\n\n"
+            systemPrompt += "\n"
         }
 
-        systemPrompt += `Guidelines:
-- Address the user by their name (${userName || 'Friend'}) occasionally to build rapport.
-- Use CBT techniques like cognitive restructuring, thought records, and behavioral activation.
-- Be empathetic, concise, and structured.
-- Do not diagnose the user. You are for mild to moderate support only.
-- If the user seems to be in crisis, direct them to professional help.`
+        systemPrompt += `CRITICAL CONVERSATION RULES — you MUST follow these strictly:
+1. Keep every response to 1–3 sentences MAXIMUM. Never write long paragraphs.
+2. Ask only ONE follow-up question per message. Wait for the user to respond before continuing.
+3. Use progressive disclosure — introduce CBT concepts gradually across multiple exchanges, never all at once.
+4. Follow this message structure: a brief empathy statement, then a single follow-up question OR a small CBT suggestion — never both.
+5. Never combine multiple therapeutic steps, techniques, or exercises in one message.
+6. Address the user by their name (${userName || 'Friend'}) occasionally to build rapport.
+7. Do not diagnose. You are for mild to moderate support only.
+8. If the user seems in crisis, direct them to professional help immediately.
+9. Be warm, human, and conversational — like a real therapist having a gentle dialogue, not giving a lecture.`
 
         // Build messages array
         const messages = [{ role: 'system', content: systemPrompt }]
@@ -63,7 +67,7 @@ Deno.serve(async (req) => {
                 model: 'llama-3.3-70b-versatile',
                 messages: messages,
                 temperature: 0.6,
-                max_tokens: 500
+                max_tokens: 200
             })
         })
 

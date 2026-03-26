@@ -53,6 +53,18 @@ export default function Chat() {
                 role: "assistant",
                 content: "CRISIS EXCLUSION PROTOCOL: It sounds like you are in distress. Please seek immediate help.\n- SURPIN: 0908 021 7555\n- Mentally Aware Nigeria: 0809 111 6264\n- She Writes Woman: 0800 800 2000"
             }]);
+
+            // Log crisis keyword detection for admin analytics
+            const matchedKeyword = suicideKeywords.find(kw => userMessage.toLowerCase().includes(kw));
+            if (currentUser?.id && matchedKeyword) {
+                supabase.from('crisis_keyword_logs').insert([{
+                    clerk_user_id: currentUser.id,
+                    keyword_matched: matchedKeyword
+                }]).then(({ error }) => {
+                    if (error) console.error("Failed to log crisis keyword:", error);
+                });
+            }
+
             return;
         }
 

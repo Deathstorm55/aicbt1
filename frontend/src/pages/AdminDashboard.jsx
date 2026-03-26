@@ -97,7 +97,7 @@ export default function AdminDashboard() {
                 variants={containerVariants}
                 initial="hidden"
                 animate="show"
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-12"
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-12"
             >
                 <motion.div variants={itemVariants} className="glass-panel text-center">
                     <h4 className="text-secondary text-sm mb-2">Total Users</h4>
@@ -123,6 +123,18 @@ export default function AdminDashboard() {
                     <h4 className="text-sm mb-2" style={{ color: metrics.crisisCount > 0 ? '#ff6b6b' : 'var(--secondary)' }}>In Crisis</h4>
                     <span className="text-4xl font-bold" style={{ color: metrics.crisisCount > 0 ? '#ff6b6b' : 'inherit' }}>
                         {metrics.crisisCount}
+                    </span>
+                </motion.div>
+
+                <motion.div variants={itemVariants} className="glass-panel text-center">
+                    <h4 className="text-secondary text-sm mb-2">Total Mood Logs</h4>
+                    <span className="text-4xl font-bold">{metrics.totalMoodLogs}</span>
+                </motion.div>
+
+                <motion.div variants={itemVariants} className="glass-panel text-center" style={{ border: metrics.crisisStatementsCount > 0 ? '1px solid #ff9800' : undefined }}>
+                    <h4 className="text-sm mb-2" style={{ color: metrics.crisisStatementsCount > 0 ? '#ff9800' : 'var(--secondary)' }}>Crisis Statements</h4>
+                    <span className="text-4xl font-bold" style={{ color: metrics.crisisStatementsCount > 0 ? '#ff9800' : 'inherit' }}>
+                        {metrics.crisisStatementsCount}
                     </span>
                 </motion.div>
             </motion.div>

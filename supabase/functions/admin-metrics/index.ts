@@ -68,6 +68,13 @@ Deno.serve(async (req) => {
 
         if (chatError) throw chatError
 
+        // Fetch crisis keyword logs for analytics
+        const { data: crisisLogs, error: crisisLogsError } = await adminClient
+            .from('crisis_keyword_logs')
+            .select('id', { count: 'exact' })
+
+        if (crisisLogsError) throw crisisLogsError
+
         // Aggregate metrics securely on the server
         const totalUsers = users.length
         const crisisCount = users.filter(u => u.needs_crisis_intervention).length
@@ -88,6 +95,8 @@ Deno.serve(async (req) => {
 
         // Average Chatbot Usage: total messages / total users
         const averageChatbotUsage = totalUsers > 0 ? (chatMessages.length / totalUsers).toFixed(1) : 0;
+        const totalMoodLogs = moodLogs.length;
+        const crisisStatementsCount = crisisLogs ? crisisLogs.length : 0;
 
         let validScores = 0
         let sumScores = 0
@@ -131,7 +140,7 @@ Deno.serve(async (req) => {
 
         return new Response(
             JSON.stringify({
-                metrics: { totalUsers, averagePhq9, crisisCount, activeUsersCount, averageChatbotUsage },
+                metrics: { totalUsers, averagePhq9, crisisCount, activeUsersCount, averageChatbotUsage, totalMoodLogs, crisisStatementsCount },
                 scoreDistribution,
                 moodTrends: formattedMoodTrends
             }),

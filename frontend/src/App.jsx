@@ -56,7 +56,10 @@ function AssessmentRoute({ children }) {
   const { currentUser, userData } = useAuth();
   if (!currentUser) return <Navigate to="/auth" />;
   if (!userData) return <Navigate to="/onboarding" />;
-  if (userData?.phq9_score !== undefined && userData?.phq9_score !== null) return <Navigate to="/" />;
+  // Allow retakes via query param, otherwise block users who already have a score
+  const searchParams = new URLSearchParams(window.location.search);
+  const isRetake = searchParams.get('retake') === 'true';
+  if (!isRetake && userData?.phq9_score !== undefined && userData?.phq9_score !== null) return <Navigate to="/" />;
   return children;
 }
 

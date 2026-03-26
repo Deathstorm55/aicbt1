@@ -12,6 +12,7 @@ export default function Dashboard() {
     const [mood, setMood] = useState('');
     const [logging, setLogging] = useState(false);
     const [dailyVerse, setDailyVerse] = useState('');
+    const [verseSummary, setVerseSummary] = useState('');
     const [loadingVerse, setLoadingVerse] = useState(false);
     const [logsTodayCount, setLogsTodayCount] = useState(0);
 
@@ -31,6 +32,7 @@ export default function Dashboard() {
 
             if (data) {
                 setDailyVerse(data.verse_text);
+                setVerseSummary(data.verse_summary || '');
             } else {
                 setLoadingVerse(true);
                 try {
@@ -40,15 +42,18 @@ export default function Dashboard() {
 
                     if (res.error) throw res.error;
                     const verse = res.data.verse;
+                    const summary = res.data.summary || '';
 
                     await supabase.from('daily_verses').insert([{
                         clerk_user_id: currentUser.id,
                         verse_text: verse,
+                        verse_summary: summary,
                         religion: userData.religion || 'prefer_not_to_say',
                         date_served: today
                     }]);
 
                     setDailyVerse(verse);
+                    setVerseSummary(summary);
                 } catch (err) {
                     console.error("Failed to fetch daily verse:", err);
                     setDailyVerse("Every day is a new beginning. Take a deep breath and start again.");
@@ -230,8 +235,11 @@ export default function Dashboard() {
                     transition={{ duration: 0.6 }}
                     style={{ background: 'linear-gradient(135deg, rgba(241, 225, 148, 0.1), rgba(91, 14, 20, 0.2))', border: '1px solid var(--secondary)', padding: '1.5rem', borderRadius: '12px', marginBottom: '2rem', textAlign: 'center' }}
                 >
-                    <h3 className="text-secondary" style={{ marginBottom: '0.5rem', fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Daily Reassurance</h3>
-                    <p style={{ fontSize: '1.25rem', fontStyle: 'italic', fontWeight: '500' }}>"{dailyVerse}"</p>
+                    <h3 className="text-secondary" style={{ marginBottom: '0.75rem', fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Daily Reassurance</h3>
+                    <p style={{ fontSize: '1.15rem', fontWeight: '500', lineHeight: '1.6' }}>{dailyVerse}</p>
+                    {verseSummary && (
+                        <p className="text-muted" style={{ fontSize: '0.875rem', marginTop: '0.75rem', lineHeight: '1.5', fontStyle: 'italic' }}>{verseSummary}</p>
+                    )}
                 </motion.div>
             )}
 
@@ -258,7 +266,7 @@ export default function Dashboard() {
                             </p>
                             {userData?.ai_insights && (
                                 <div style={{ marginTop: '1rem', padding: '1rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', fontSize: '0.875rem', borderLeft: `3px solid ${getSeverityColor(userData.phq9_score)}` }}>
-                                    <i>"{userData.ai_insights}"</i>
+                                    <i>{userData.ai_insights}</i>
                                 </div>
                             )}
                             {userData.last_assessment_date && (
@@ -266,6 +274,23 @@ export default function Dashboard() {
                                     Last assessed: {new Date(userData.last_assessment_date).toLocaleDateString()}
                                 </p>
                             )}
+                            {(() => {
+                                const lastDate = userData.last_assessment_date ? new Date(userData.last_assessment_date) : null;
+                                const now = new Date();
+                                const daysSince = lastDate ? Math.floor((now - lastDate) / (1000 * 60 * 60 * 24)) : 999;
+                                const canRetake = daysSince >= 7;
+                                const daysRemaining = 7 - daysSince;
+                                return (
+                                    <button
+                                        onClick={() => navigate('/assessment?retake=true')}
+                                        className={canRetake ? 'btn btn-secondary' : 'btn-ghost'}
+                                        disabled={!canRetake}
+                                        style={{ marginTop: '1rem', width: '100%', opacity: canRetake ? 1 : 0.5 }}
+                                    >
+                                        {canRetake ? '🔄 Retake PHQ-9 Assessment' : `Retake available in ${daysRemaining} day${daysRemaining !== 1 ? 's' : ''}`}
+                                    </button>
+                                );
+                            })()}
                         </>
                     ) : (
                         <p>No assessment recorded.</p>
