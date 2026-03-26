@@ -42,6 +42,7 @@ export default function PHQ9Form() {
     const navigate = useNavigate();
     const [answers, setAnswers] = useState(Array(9).fill(null));
     const [error, setError] = useState('');
+    const [submitting, setSubmitting] = useState(false);
 
     const handleSelect = (index, value) => {
         const newAnswers = [...answers];
@@ -57,6 +58,7 @@ export default function PHQ9Form() {
         }
         setError('');
 
+        setSubmitting(true);
         startLoading('Analyzing your assessment...');
 
         const score = answers.reduce((a, b) => a + b, 0);
@@ -165,6 +167,7 @@ export default function PHQ9Form() {
             setError("Failed to save assessment.");
             console.error(err);
         } finally {
+            setSubmitting(false);
             stopLoading();
         }
     };
@@ -239,8 +242,8 @@ export default function PHQ9Form() {
                     ))}
                     <motion.div variants={itemVariants} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '2rem' }}>
                         <button type="button" className="btn-ghost" onClick={logout}>Sign Out</button>
-                        <button type="submit" className="btn btn-primary" disabled={loading}>
-                            {loading ? 'Submitting...' : 'Submit Assessment'}
+                        <button type="submit" className="btn btn-primary" disabled={submitting}>
+                            {submitting ? 'Submitting...' : 'Submit Assessment'}
                         </button>
                     </motion.div>
                 </form>
