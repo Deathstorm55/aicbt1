@@ -75,6 +75,14 @@ Deno.serve(async (req) => {
 
         if (crisisLogsError) throw crisisLogsError
 
+        // Fetch PHQ-9 history for longitudinal tracking
+        const { data: phq9History, error: phq9Error } = await adminClient
+            .from('phq9_history')
+            .select('*')
+            .order('created_at', { ascending: true })
+
+        if (phq9Error) throw phq9Error
+
         // Aggregate metrics securely on the server
         const totalUsers = users.length
         const crisisCount = users.filter(u => u.needs_crisis_intervention).length
@@ -136,13 +144,106 @@ Deno.serve(async (req) => {
         const formattedMoodTrends = Object.keys(moodTrendCounts).map(date => ({
             date,
             ...moodTrendCounts[date]
-        })).slice(-14) // Last 14 days
+        })).slice(-30) // Last 30 days for trend chart
+
+        // Mood Summary Table Data
+        const moodScoreMap: Record<string, number> = { great: 5, good: 4, okay: 3, bad: 2, awful: 1 }
+        const moodSummaryTable = Object.keys(moodTrendCounts).map(date => {
+            const counts = moodTrendCounts[date]
+            const total = counts.great + counts.good + counts.okay + counts.bad + counts.awful
+            const sum = (counts.great * 5) + (counts.good * 4) + (counts.okay * 3) + (counts.bad * 2) + (counts.awful * 1)
+            const avg = total > 0 ? (sum / total).toFixed(2) : "0"
+            const pos = total > 0 ? (((counts.great + counts.good) / total) * 100).toFixed(1) : "0"
+            const neg = total > 0 ? (((counts.bad + counts.awful) / total) * 100).toFixed(1) : "0"
+            return { date, average_mood_score: avg, total_entries: total, positive_percentage: pos, negative_percentage: neg }
+        }).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 14)
+
+        // PHQ-9 vs Mood Correlation (Retake Impact)
+        const retakeImpact = phq9History.reduce((acc: any[], record: any, idx: number) => {
+            // Find previous record for this user to identify a "retake"
+            const userHistory = phq9History.filter((h: any) => h.clerk_user_id === record.clerk_user_id && h.created_at < record.created_at)
+            if (userHistory.length === 0) return acc
+
+            const prevRecord = userHistory[userHistory.length - 1]
+            const retakeDate = new Date(record.created_at)
+
+            // Calc average mood 7 days before and 7 days after
+            const beforeStart = new Date(retakeDate)
+            beforeStart.setDate(beforeStart.getDate() - 7)
+            const afterEnd = new Date(retakeDate)
+            afterEnd.setDate(afterEnd.getDate() + 7)
+
+            const moodBefore = moodLogs.filter((l: any) =>
+                l.clerk_user_id === record.clerk_user_id &&
+                new Date(l.created_at) >= beforeStart &&
+                new Date(l.created_at) < retakeDate
+            )
+            const moodAfter = moodLogs.filter((l: any) =>
+                l.clerk_user_id === record.clerk_user_id &&
+                new Date(l.created_at) > retakeDate &&
+                new Date(l.created_at) <= afterEnd
+            )
+
+            const avgMoodBefore = moodBefore.length > 0
+                ? (moodBefore.reduce((sum: number, l: any) => sum + moodScoreMap[l.mood], 0) / moodBefore.length).toFixed(2)
+                : "N/A"
+            const avgMoodAfter = moodAfter.length > 0
+                ? (moodAfter.reduce((sum: number, l: any) => sum + moodScoreMap[l.mood], 0) / moodAfter.length).toFixed(2)
+                : "N/A"
+
+            acc.push({
+                user_id: record.clerk_user_id.substring(0, 8) + '...',
+                previous_score: prevRecord.score,
+                new_score: record.score,
+                score_change: record.score - prevRecord.score,
+                average_mood_before: avgMoodBefore,
+                average_mood_after: avgMoodAfter,
+                retake_date: record.created_at.split('T')[0]
+            })
+            return acc
+        }, [])
+
+        // Daily average mood score for Area Chart
+        const moodScoreTrend = Object.keys(moodTrendCounts).map(date => {
+            const counts = moodTrendCounts[date]
+            const total = counts.great + counts.good + counts.okay + counts.bad + counts.awful
+            const sum = (counts.great * 5) + (counts.good * 4) + (counts.okay * 3) + (counts.bad * 2) + (counts.awful * 1)
+            return { date, avg: total > 0 ? parseFloat((sum / total).toFixed(2)) : 0 }
+        }).sort((a, b) => a.date.localeCompare(b.date)).slice(-30)
+
+        // PHQ-9 scores over time (aggregated avg)
+        const phq9Trend = phq9History.reduce((acc: any, h: any) => {
+            const date = h.created_at.split('T')[0]
+            if (!acc[date]) acc[date] = { sum: 0, count: 0 }
+            acc[date].sum += h.score
+            acc[date].count++
+            return acc
+        }, {})
+
+        const formattedPhq9Trend = Object.keys(phq9Trend).map(date => ({
+            date,
+            avgPhq9: parseFloat((phq9Trend[date].sum / phq9Trend[date].count).toFixed(1))
+        })).sort((a, b) => a.date.localeCompare(b.date))
+
+        // Combined data for dual-axis chart
+        const phq9VsMood = formattedPhq9Trend.map(p => {
+            const m = moodScoreTrend.find(mt => mt.date === p.date)
+            return {
+                date: p.date,
+                phq9: p.avgPhq9,
+                mood: m ? m.avg : null
+            }
+        })
 
         return new Response(
             JSON.stringify({
                 metrics: { totalUsers, averagePhq9, crisisCount, activeUsersCount, averageChatbotUsage, totalMoodLogs, crisisStatementsCount },
                 scoreDistribution,
-                moodTrends: formattedMoodTrends
+                moodTrends: formattedMoodTrends,
+                moodScoreTrend,
+                moodSummaryTable,
+                retakeImpact,
+                phq9VsMood
             }),
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
