@@ -31,15 +31,29 @@ export default function Dashboard() {
             if (error && error.code !== 'PGRST116') console.error("Error fetching daily verse:", error);
 
             if (data) {
-                // Defensive check: if verse_text looks like JSON, parse it
-                if (data.verse_text && data.verse_text.trim().startsWith('{')) {
+                const text = data.verse_text || '';
+                // Defensive check: if verse_text looks like JSON or technical format, parse it
+                if (text.trim().startsWith('{') || text.includes('"verse":')) {
                     try {
-                        const parsed = JSON.parse(data.verse_text);
-                        setDailyVerse(parsed.verse || data.verse_text);
+                        const parsed = JSON.parse(text);
+                        setDailyVerse(parsed.verse || text);
                         setVerseSummary(parsed.summary || data.verse_summary || '');
                     } catch (e) {
-                        setDailyVerse(data.verse_text);
-                        setVerseSummary(data.verse_summary || '');
+                        // Fallback string-based extraction if JSON.parse fails
+                        let v = text;
+                        let s = data.verse_summary || '';
+
+                        if (text.includes('"verse":')) {
+                            const vPart = text.split('"verse":')[1]?.split('"summary":')[0];
+                            if (vPart) v = vPart.replace(/^[\s:"']+|[\s,"']+$/g, '').trim();
+                        }
+                        if (text.includes('"summary":')) {
+                            const sPart = text.split('"summary":')[1];
+                            if (sPart) s = sPart.replace(/^[\s:"']+|[\s}"']+$/g, '').trim();
+                        }
+
+                        setDailyVerse(v);
+                        setVerseSummary(s);
                     }
                 } else {
                     setDailyVerse(data.verse_text);
