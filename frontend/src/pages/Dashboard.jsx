@@ -31,8 +31,20 @@ export default function Dashboard() {
             if (error && error.code !== 'PGRST116') console.error("Error fetching daily verse:", error);
 
             if (data) {
-                setDailyVerse(data.verse_text);
-                setVerseSummary(data.verse_summary || '');
+                // Defensive check: if verse_text looks like JSON, parse it
+                if (data.verse_text && data.verse_text.trim().startsWith('{')) {
+                    try {
+                        const parsed = JSON.parse(data.verse_text);
+                        setDailyVerse(parsed.verse || data.verse_text);
+                        setVerseSummary(parsed.summary || data.verse_summary || '');
+                    } catch (e) {
+                        setDailyVerse(data.verse_text);
+                        setVerseSummary(data.verse_summary || '');
+                    }
+                } else {
+                    setDailyVerse(data.verse_text);
+                    setVerseSummary(data.verse_summary || '');
+                }
             } else {
                 setLoadingVerse(true);
                 try {
