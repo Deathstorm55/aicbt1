@@ -7,6 +7,8 @@ import Chat from './pages/Chat';
 import PHQ9Form from './components/PHQ9Form';
 import Onboarding from './pages/Onboarding';
 import AdminDashboard from './pages/AdminDashboard';
+import Landing from './pages/Landing';
+import Docs from './pages/Docs';
 import { TextShimmerColor } from './components/ui/demo';
 import { UserButton, SignedIn } from '@clerk/clerk-react';
 import { Menu, X } from 'lucide-react';
@@ -83,6 +85,14 @@ function AdminRoute({ children }) {
   return children;
 }
 
+function IndexRoute() {
+  const { currentUser } = useAuth();
+  if (currentUser) {
+    return <PrivateRoute><Dashboard /></PrivateRoute>;
+  }
+  return <Landing />;
+}
+
 
 export default function App() {
   const { currentUser, userData } = useAuth();
@@ -99,7 +109,7 @@ export default function App() {
         <GlobalPopup />
         <nav style={{ padding: '1rem', background: 'rgba(0,0,0,0.5)', borderBottom: '1px solid var(--glass-border)', position: 'sticky', top: 0, zIndex: 50, backdropFilter: 'blur(10px)' }}>
           <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h1 className="text-secondary" style={{ fontSize: '1.25rem', margin: 0 }}>AI Therapist</h1>
+            <h1 className="text-secondary" style={{ fontSize: '1.25rem', margin: 0 }}>AwakeSoul</h1>
 
             {/* Desktop Navigation */}
             {currentUser && (
@@ -142,13 +152,22 @@ export default function App() {
             )}
 
             {!currentUser && (
-              <button
-                className="btn-primary"
-                onClick={() => window.location.href = '/auth'}
-                style={{ padding: '0.5rem 1.5rem', borderRadius: '8px' }}
-              >
-                Log In
-              </button>
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <button
+                  className="btn-ghost"
+                  onClick={() => window.location.href = '/docs'}
+                  style={{ padding: '0.5rem 1.5rem', borderRadius: '8px' }}
+                >
+                  Docs
+                </button>
+                <button
+                  className="btn-primary"
+                  onClick={() => window.location.href = '/auth'}
+                  style={{ padding: '0.5rem 1.5rem', borderRadius: '8px' }}
+                >
+                  Log In
+                </button>
+              </div>
             )}
           </div>
 
@@ -203,7 +222,8 @@ export default function App() {
             <Route path="/assessment" element={<AssessmentRoute><PHQ9Form /></AssessmentRoute>} />
             <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
             <Route path="/shimmer-demo" element={<div className="container" style={{ padding: '4rem' }}><TextShimmerColor /></div>} />
-            <Route path="/" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+            <Route path="/" element={<IndexRoute />} />
+            <Route path="/docs" element={<Docs />} />
             <Route path="/chat" element={<ChatRoute><Chat /></ChatRoute>} />
           </Routes>
         </main>

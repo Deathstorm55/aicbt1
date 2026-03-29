@@ -203,7 +203,6 @@ export default function MoodReminderPopup({ supabase, currentUser, onMoodLogged 
 
                         <h3 style={{
                             color: 'var(--secondary)',
-                            fontSize: '1.25rem',
                             fontWeight: '600',
                             marginBottom: '0.5rem',
                             textTransform: 'uppercase',

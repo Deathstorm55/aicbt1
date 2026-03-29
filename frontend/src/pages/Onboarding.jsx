@@ -84,7 +84,7 @@ export default function Onboarding() {
                 animate="visible"
             >
                 <motion.h2 variants={itemVariants} className="text-center text-secondary" style={{ marginBottom: '1.5rem', fontSize: '2rem' }}>
-                    Welcome to AI Therapist
+                    Welcome to AwakeSoul
                 </motion.h2>
                 <motion.p variants={itemVariants} className="text-center text-muted" style={{ marginBottom: '2rem' }}>
                     Let's set up your profile for personalized support.
