@@ -106,7 +106,7 @@ export default function AdminDashboard() {
 
                 <motion.div variants={itemVariants} className="glass-panel text-center">
                     <h4 className="text-secondary text-sm mb-2">Active Users (7d)</h4>
-                    <span className="text-4xl font-bold text-primary">{metrics.activeUsersCount}</span>
+                    <span className="text-4xl font-bold" style={{ color: '#F6EDB9' }}>{metrics.activeUsersCount}</span>
                 </motion.div>
 
                 <motion.div variants={itemVariants} className="glass-panel text-center">
