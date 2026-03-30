@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { useUser, useAuth as useClerkAuth } from '@clerk/clerk-react';
-import { createClerkSupabaseClient } from '../services/supabase';
+import { getAuthenticatedClient } from '../services/supabase';
 
 const AuthContext = createContext();
 
@@ -16,10 +16,10 @@ export function AuthProvider({ children }) {
     const [userData, setUserData] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    // Create a single Supabase client that auto-refreshes the Clerk token on every request
+    // Singleton Supabase client — same instance returned every time
     const authenticatedSupabase = useMemo(() => {
         if (!clerkUser) return null;
-        return createClerkSupabaseClient(getToken);
+        return getAuthenticatedClient(getToken);
     }, [clerkUser, getToken]);
 
     const fetchUserProfile = useCallback(async () => {

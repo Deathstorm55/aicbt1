@@ -3,22 +3,31 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Default unauthenticated client (only used for public operations)
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
 /**
- * Creates a Supabase client that fetches a fresh Clerk token on every request.
- * This avoids token expiration issues by using the accessToken callback.
+ * Singleton Supabase client with Clerk token injection.
+ * Only ONE instance is ever created, eliminating GoTrueClient duplication warnings.
+ * Auth listeners are disabled since Clerk handles all authentication.
  */
-export function createClerkSupabaseClient(getToken) {
-    return createClient(supabaseUrl, supabaseAnonKey, {
+let _client = null;
+
+export function getAuthenticatedClient(getToken) {
+    if (_client) return _client;
+
+    _client = createClient(supabaseUrl, supabaseAnonKey, {
+        auth: {
+            autoRefreshToken: false,
+            persistSession: false,
+            detectSessionInUrl: false,
+        },
         global: {
             fetch: async (url, options = {}) => {
                 const clerkToken = await getToken({ template: 'supabase' });
                 const headers = new Headers(options?.headers);
                 headers.set('Authorization', `Bearer ${clerkToken}`);
                 return fetch(url, { ...options, headers });
-            }
-        }
+            },
+        },
     });
+
+    return _client;
 }

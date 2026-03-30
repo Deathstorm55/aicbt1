@@ -151,6 +151,13 @@ export default function Dashboard() {
             return;
         }
 
+        // Optimistic UI: update immediately before API response
+        const previousCount = logsTodayCount;
+        const submittedMood = mood;
+        setLogsTodayCount(prev => prev + 1);
+        setMood('');
+        showPopup({ title: 'Success', message: 'Mood logged successfully!', type: 'success' });
+
         setLogging(true);
         try {
             const hour = new Date().getHours();
@@ -160,16 +167,14 @@ export default function Dashboard() {
 
             const { error } = await supabase
                 .from('mood_logs')
-                .insert([{ clerk_user_id: currentUser.id, mood: mood, time_of_day: timeOfDay }]);
+                .insert([{ clerk_user_id: currentUser.id, mood: submittedMood, time_of_day: timeOfDay }]);
 
             if (error) throw error;
-
-            setLogsTodayCount(prev => prev + 1);
-            showPopup({ title: 'Success', message: 'Mood logged successfully!', type: 'success' });
-            setMood('');
         } catch (err) {
+            // Revert optimistic update on failure
             console.error(err);
-            showPopup({ title: 'Error', message: 'Failed to log mood.', type: 'error' });
+            setLogsTodayCount(previousCount);
+            showPopup({ title: 'Error', message: 'Failed to log mood. Please try again.', type: 'error' });
         }
         setLogging(false);
     };

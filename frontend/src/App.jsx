@@ -1,14 +1,9 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import Auth from './pages/Auth';
-import Dashboard from './pages/Dashboard';
-import Chat from './pages/Chat';
 import PHQ9Form from './components/PHQ9Form';
 import Onboarding from './pages/Onboarding';
-import AdminDashboard from './pages/AdminDashboard';
-import Landing from './pages/Landing';
-import Docs from './pages/Docs';
 import { TextShimmerColor } from './components/ui/demo';
 import { UserButton, SignedIn } from '@clerk/clerk-react';
 import { Menu, X } from 'lucide-react';
@@ -17,6 +12,14 @@ import { PopupProvider } from './contexts/PopupContext';
 import GlobalPopup from './components/ui/GlobalPopup';
 import { LoadingProvider } from './contexts/LoadingContext';
 import GlobalLoader15 from './components/ui/loader-15';
+import PageSkeleton from './components/ui/PageSkeleton';
+
+// Code-split heavy pages for faster initial load
+const Dashboard = React.lazy(() => import('./pages/Dashboard'));
+const Chat = React.lazy(() => import('./pages/Chat'));
+const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard'));
+const Landing = React.lazy(() => import('./pages/Landing'));
+const Docs = React.lazy(() => import('./pages/Docs'));
 
 function PrivateRoute({ children }) {
   const { currentUser, userData } = useAuth();
@@ -216,16 +219,18 @@ export default function App() {
         </nav>
 
         <main style={{ flex: 1 }}>
-          <Routes>
-            <Route path="/auth" element={<PublicRoute><Auth /></PublicRoute>} />
-            <Route path="/onboarding" element={<OnboardingRoute><Onboarding /></OnboardingRoute>} />
-            <Route path="/assessment" element={<AssessmentRoute><PHQ9Form /></AssessmentRoute>} />
-            <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-            <Route path="/shimmer-demo" element={<div className="container" style={{ padding: '4rem' }}><TextShimmerColor /></div>} />
-            <Route path="/" element={<IndexRoute />} />
-            <Route path="/docs" element={<Docs />} />
-            <Route path="/chat" element={<ChatRoute><Chat /></ChatRoute>} />
-          </Routes>
+          <Suspense fallback={<PageSkeleton />}>
+            <Routes>
+              <Route path="/auth" element={<PublicRoute><Auth /></PublicRoute>} />
+              <Route path="/onboarding" element={<OnboardingRoute><Onboarding /></OnboardingRoute>} />
+              <Route path="/assessment" element={<AssessmentRoute><PHQ9Form /></AssessmentRoute>} />
+              <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+              <Route path="/shimmer-demo" element={<div className="container" style={{ padding: '4rem' }}><TextShimmerColor /></div>} />
+              <Route path="/" element={<IndexRoute />} />
+              <Route path="/docs" element={<Docs />} />
+              <Route path="/chat" element={<ChatRoute><Chat /></ChatRoute>} />
+            </Routes>
+          </Suspense>
         </main>
       </PopupProvider>
     </LoadingProvider>
