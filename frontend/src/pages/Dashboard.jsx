@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { usePopup } from '../contexts/PopupContext';
 import MoodReminderPopup from '../components/MoodReminderPopup';
+import DailyReassurance from '../components/DailyReassurance';
 
 export default function Dashboard() {
     const { currentUser, userData, logout, supabase } = useAuth();
@@ -32,33 +33,32 @@ export default function Dashboard() {
 
             if (data) {
                 const text = data.verse_text || '';
-                // Defensive check: if verse_text looks like JSON or technical format, parse it
-                if (text.trim().startsWith('{') || text.includes('"verse":')) {
+
+                // Aggressive cleanup for legacy JSON entries in database
+                let finalVerse = text;
+                let finalSummary = data.verse_summary || '';
+
+                // If the text looks like JSON or contains JSON keys
+                if (text.includes('"verse":') || text.includes('{"') || text.trim().startsWith('{')) {
                     try {
                         const parsed = JSON.parse(text);
-                        setDailyVerse(parsed.verse || text);
-                        setVerseSummary(parsed.summary || data.verse_summary || '');
+                        finalVerse = parsed.verse || text;
+                        finalSummary = parsed.summary || finalSummary;
                     } catch (e) {
-                        // Fallback string-based extraction if JSON.parse fails
-                        let v = text;
-                        let s = data.verse_summary || '';
+                        const vMatch = text.match(/"verse"\s*:\s*"([^"]*)"/);
+                        const sMatch = text.match(/"summary"\s*:\s*"([^"]*)"/);
+                        if (vMatch) finalVerse = vMatch[1];
+                        if (sMatch) finalSummary = sMatch[1];
 
-                        if (text.includes('"verse":')) {
-                            const vPart = text.split('"verse":')[1]?.split('"summary":')[0];
-                            if (vPart) v = vPart.replace(/^[\s:"']+|[\s,"']+$/g, '').trim();
+                        if (!vMatch && !sMatch) {
+                            finalVerse = text.replace(/{"verse":|}/g, '').replace(/"/g, '').trim();
                         }
-                        if (text.includes('"summary":')) {
-                            const sPart = text.split('"summary":')[1];
-                            if (sPart) s = sPart.replace(/^[\s:"']+|[\s}"']+$/g, '').trim();
-                        }
-
-                        setDailyVerse(v);
-                        setVerseSummary(s);
                     }
-                } else {
-                    setDailyVerse(data.verse_text);
-                    setVerseSummary(data.verse_summary || '');
                 }
+
+                // Final clean up of rogue quotes
+                setDailyVerse(finalVerse.replace(/^["']|["']$/g, '').replace(/\\n/g, ' ').trim());
+                setVerseSummary(finalSummary.replace(/^["']|["']$/g, '').replace(/\\n/g, ' ').trim());
             } else {
                 setLoadingVerse(true);
                 try {
@@ -259,24 +259,7 @@ export default function Dashboard() {
                 </motion.div>
             )}
 
-            {dailyVerse && (
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.6 }}
-                    style={{ background: 'linear-gradient(135deg, rgba(241, 225, 148, 0.1), rgba(91, 14, 20, 0.2))', border: '1px solid var(--secondary)', padding: '1.5rem', borderRadius: '12px', marginBottom: '2rem', textAlign: 'center' }}
-                >
-                    <h3 className="text-secondary" style={{ marginBottom: '0.75rem', fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Daily Reassurance</h3>
-                    <p style={{ fontSize: '1.15rem', fontWeight: '500', lineHeight: '1.6' }}>{dailyVerse}</p>
-                    {verseSummary && (
-                        <p className="text-muted" style={{ fontSize: '0.875rem', marginTop: '0.75rem', lineHeight: '1.5', fontStyle: 'italic' }}>{verseSummary}</p>
-                    )}
-                </motion.div>
-            )}
-
-            {loadingVerse && (
-                <div style={{ textAlign: 'center', marginBottom: '2rem', color: 'var(--text-muted)' }}>Generating your daily reassurance...</div>
-            )}
+            <DailyReassurance verse={dailyVerse} summary={verseSummary} isLoading={loadingVerse} />
 
             <motion.div
                 variants={containerVariants}

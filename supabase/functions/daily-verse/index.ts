@@ -16,10 +16,16 @@ Deno.serve(async (req) => {
         const apiKey = Deno.env.get('LLAMA_API_KEY')
         if (!apiKey) throw new Error('LLAMA_API_KEY secret is not set in Supabase project settings.')
 
-        const themes = ["hope", "peace", "strength", "overcoming anxiety", "patience", "forgiveness", "guidance"];
+        const themes = ["peace", "hope", "anxiety relief", "strength", "patience", "comfort", "healing", "trust", "overcoming hardship"];
         const randomTheme = themes[Math.floor(Math.random() * themes.length)];
 
-        let prompt = `Provide a short, UNIQUE, and less commonly quoted encouraging verse or quote aligned with the user's religion that promotes ${randomTheme} and emotional resilience. Do not repeat Jeremiah 29:11.`
+        let prompt = `Provide a short, unique, and encouraging verse or quote aligned with the user's religion (${religion}) that specifically promotes ${randomTheme} and emotional resilience. 
+        
+CRITICAL CONTENT RULES:
+- MUST relate to mental health, emotional well-being, or resilience.
+- STRICTLY FORBIDDEN: War, violence, judgment, fear-based themes, or genealogical passages.
+- Do not repeat Jeremiah 29:11.`
+
         if (religion === 'christian') {
             prompt += ' Use a specific Bible verse. Include the text and the reference.'
         } else if (religion === 'muslim') {
@@ -27,7 +33,16 @@ Deno.serve(async (req) => {
         } else {
             prompt += ' Use a secular motivational or philosophical quote.'
         }
-        prompt += '\n\nIMPORTANT: Respond ONLY with valid JSON in this exact format, no other text:\n{"verse": "The verse text here without quotation marks", "summary": "A 1-2 sentence explanation of what this verse means for someone struggling emotionally"}'
+
+        prompt += `
+        
+SUMMARY RULES:
+- Provide a concise 1-2 sentence summary.
+- Focus on emotional support and practical meaning for CBT/depression relief.
+- Use simple, secular language. Avoid preaching tone or heavy religious jargon.
+
+IMPORTANT: Respond ONLY with valid JSON in this exact format:
+{"verse": "The verse text here without quotation marks", "summary": "A 1-2 sentence explanation of what this verse means for someone struggling emotionally"}`
 
         const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
             method: 'POST',
@@ -38,11 +53,12 @@ Deno.serve(async (req) => {
             body: JSON.stringify({
                 model: 'llama-3.3-70b-versatile',
                 messages: [
-                    { role: 'system', content: 'You are a compassionate AI therapist. Always respond with valid JSON only.' },
+                    { role: 'system', content: 'You are a compassionate AI therapist. You must respond in pure JSON.' },
                     { role: 'user', content: prompt }
                 ],
                 temperature: 0.7,
-                max_tokens: 200
+                max_tokens: 250,
+                response_format: { type: "json_object" }
             })
         })
 
@@ -52,34 +68,22 @@ Deno.serve(async (req) => {
         }
 
         const data = await groqResponse.json()
-        const rawContent = data.choices?.[0]?.message?.content || ""
+        const rawContent = data.choices?.[0]?.message?.content || "{}"
 
-        // Improved JSON parsing to handle markdown code blocks and raw JSON
         let verse = "Hope is the anchor of the soul."
         let summary = "You are never alone in your journey."
+
         try {
-            // Find content between first and last curly braces if backticks are present
-            const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
-            const contentToParse = jsonMatch ? jsonMatch[0] : rawContent;
-            const parsed = JSON.parse(contentToParse);
-
-            verse = parsed.verse || verse;
-            summary = parsed.summary || summary;
-
-            // Clean up surrounding quotes from the extracted text if any
-            verse = verse.replace(/^["']|["']$/g, '').trim();
-            summary = summary.replace(/^["']|["']$/g, '').trim();
+            const parsed = JSON.parse(rawContent);
+            verse = parsed.verse ? parsed.verse.trim() : verse;
+            summary = parsed.summary ? parsed.summary.trim() : summary;
         } catch (err) {
             console.error("JSON parsing error for verse:", err);
-            // If it fails, try a simple regex extraction as fallback
-            const vMatch = rawContent.match(/"verse":\s*"([^"]*)"/);
-            const sMatch = rawContent.match(/"summary":\s*"([^"]*)"/);
+            // Fallback just in case JSON.parse fails, though json_object format makes this unlikely
+            const vMatch = rawContent.match(/"verse"\s*:\s*"([^"]*)"/);
+            const sMatch = rawContent.match(/"summary"\s*:\s*"([^"]*)"/);
             if (vMatch) verse = vMatch[1];
             if (sMatch) summary = sMatch[1];
-
-            if (!vMatch && !sMatch) {
-                verse = rawContent.replace(/^["']|["']$/g, '').trim();
-            }
         }
 
         return new Response(
@@ -88,7 +92,7 @@ Deno.serve(async (req) => {
         )
     } catch (error) {
         console.error('Daily verse function error:', error)
-        return new Response(JSON.stringify({ error: error.message }), {
+        return new Response(JSON.stringify({ error: error instanceof Error ? error.message : String(error) }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 400,
         })
