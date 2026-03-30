@@ -11,4 +11,18 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  build: {
+    chunkSizeWarningLimit: 800,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          react_vendor: ['react', 'react-dom', 'react-router-dom'],
+          ui_vendor: ['framer-motion', 'lucide-react', 'styled-components'],
+          auth_vendor: ['@clerk/clerk-react', '@clerk/react'],
+          charts_vendor: ['recharts'],
+          crypto: ['crypto-js']
+        }
+      }
+    }
+  }
 })

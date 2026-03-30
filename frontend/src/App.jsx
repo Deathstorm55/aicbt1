@@ -14,12 +14,18 @@ import { LoadingProvider } from './contexts/LoadingContext';
 import GlobalLoader15 from './components/ui/loader-15';
 import PageSkeleton from './components/ui/PageSkeleton';
 
-// Code-split heavy pages for faster initial load
-const Dashboard = React.lazy(() => import('./pages/Dashboard'));
-const Chat = React.lazy(() => import('./pages/Chat'));
-const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard'));
-const Landing = React.lazy(() => import('./pages/Landing'));
-const Docs = React.lazy(() => import('./pages/Docs'));
+// Prefetch logic for heavy pages to begin downloading chunk on hover
+const loadDashboard = () => import('./pages/Dashboard');
+const loadChat = () => import('./pages/Chat');
+const loadAdmin = () => import('./pages/AdminDashboard');
+const loadLanding = () => import('./pages/Landing');
+const loadDocs = () => import('./pages/Docs');
+
+const Dashboard = React.lazy(loadDashboard);
+const Chat = React.lazy(loadChat);
+const AdminDashboard = React.lazy(loadAdmin);
+const Landing = React.lazy(loadLanding);
+const Docs = React.lazy(loadDocs);
 
 function PrivateRoute({ children }) {
   const { currentUser, userData } = useAuth();
@@ -120,6 +126,7 @@ export default function App() {
                 <button
                   className="btn-ghost"
                   onClick={() => window.location.href = '/chat'}
+                  onMouseEnter={loadChat}
                   style={{ padding: '0.5rem 1rem', borderRadius: '8px' }}
                 >
                   Chat
@@ -127,6 +134,7 @@ export default function App() {
                 <button
                   className="btn-ghost"
                   onClick={() => window.location.href = '/'}
+                  onMouseEnter={loadDashboard}
                   style={{ padding: '0.5rem 1rem', borderRadius: '8px' }}
                 >
                   Dashboard
@@ -134,6 +142,7 @@ export default function App() {
                 {isAdmin && (
                   <button
                     onClick={() => window.location.href = '/admin'}
+                    onMouseEnter={loadAdmin}
                     style={{ padding: '0.5rem 1rem', borderRadius: '8px', background: 'var(--primary)', color: '#fff', fontWeight: 'bold' }}
                   >
                     Admin Portal
@@ -159,6 +168,7 @@ export default function App() {
                 <button
                   className="btn-ghost"
                   onClick={() => window.location.href = '/docs'}
+                  onMouseEnter={loadDocs}
                   style={{ padding: '0.5rem 1.5rem', borderRadius: '8px' }}
                 >
                   Docs
@@ -193,6 +203,7 @@ export default function App() {
                   <button
                     className="btn-secondary"
                     onClick={() => { window.location.href = '/chat'; setIsMenuOpen(false); }}
+                    onMouseEnter={loadChat}
                     style={{ textAlign: 'left', padding: '1rem' }}
                   >
                     Chatbot
@@ -200,6 +211,7 @@ export default function App() {
                   <button
                     className="btn-ghost"
                     onClick={() => { window.location.href = '/'; setIsMenuOpen(false); }}
+                    onMouseEnter={loadDashboard}
                     style={{ textAlign: 'left', padding: '1rem' }}
                   >
                     Your Dashboard
@@ -207,6 +219,7 @@ export default function App() {
                   {isAdmin && (
                     <button
                       onClick={() => { window.location.href = '/admin'; setIsMenuOpen(false); }}
+                      onMouseEnter={loadAdmin}
                       style={{ padding: '1rem', borderRadius: '8px', background: 'var(--primary)', color: '#fff', fontWeight: 'bold', textAlign: 'left' }}
                     >
                       Admin Portal
