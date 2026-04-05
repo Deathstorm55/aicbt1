@@ -48,6 +48,14 @@ export default function Docs() {
             ]
         },
         {
+            title: "Who Can Use This Tool?",
+            questions: [
+                { q: "Who is this chatbot designed for?", a: "This chatbot is designed for individuals experiencing mild to moderate emotional distress, based on a PHQ-9 score between 5 and 20." },
+                { q: "Why can’t some people use the chatbot?", a: "The chatbot is not a replacement for professional care. Individuals with very high distress levels or no symptoms may require a different type of support." },
+                { q: "What happens if I am not eligible?", a: "You will be guided to more appropriate support options, including professional help or crisis resources if needed." }
+            ]
+        },
+        {
             title: "Cognitive Behavioral Therapy (CBT)",
             questions: [
                 { q: "What is CBT?", a: "CBT is a method that helps you understand how your thoughts affect your feelings and actions." },

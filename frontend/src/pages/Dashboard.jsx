@@ -1,14 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { usePopup } from '../contexts/PopupContext';
 import MoodReminderPopup from '../components/MoodReminderPopup';
 import DailyReassurance from '../components/DailyReassurance';
+import EligibilityModal from '../components/EligibilityModal';
 
 export default function Dashboard() {
     const { currentUser, userData, logout, supabase } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
     const { showPopup } = usePopup();
     const [mood, setMood] = useState('');
     const [logging, setLogging] = useState(false);
@@ -16,6 +18,17 @@ export default function Dashboard() {
     const [verseSummary, setVerseSummary] = useState('');
     const [loadingVerse, setLoadingVerse] = useState(false);
     const [logsTodayCount, setLogsTodayCount] = useState(0);
+
+    const [isEligibilityModalOpen, setIsEligibilityModalOpen] = useState(false);
+    const [eligibilityModalType, setEligibilityModalType] = useState('low');
+
+    useEffect(() => {
+        if (location.state && location.state.showEligibilityNotice) {
+            setEligibilityModalType(location.state.type || 'low');
+            setIsEligibilityModalOpen(true);
+            window.history.replaceState({}, document.title);
+        }
+    }, [location.state]);
 
     useEffect(() => {
         const fetchDailyVerse = async () => {
@@ -179,6 +192,15 @@ export default function Dashboard() {
         setLogging(false);
     };
 
+    const handleChatClick = () => {
+        if (!userData?.eligible_for_chatbot) {
+            setEligibilityModalType(userData?.has_suicidal_ideation || userData?.phq9_score > 20 ? 'crisis' : 'low');
+            setIsEligibilityModalOpen(true);
+        } else {
+            navigate('/chat');
+        }
+    };
+
     const containerVariants = {
         hidden: { opacity: 0 },
         show: {
@@ -317,7 +339,7 @@ export default function Dashboard() {
                         <h3 className="text-secondary" style={{ marginBottom: '1rem' }}>CBT Session</h3>
                         <p className="text-muted">Engage in an AI-powered Cognitive Behavioral Therapy session integrated with spiritual support to help manage your symptoms.</p>
                     </div>
-                    <button onClick={() => navigate('/chat')} className="btn btn-primary" style={{ marginTop: '2rem' }}>
+                    <button onClick={handleChatClick} className="btn btn-primary" style={{ marginTop: '2rem' }}>
                         Start Chat Session
                     </button>
                 </motion.div>
@@ -351,6 +373,12 @@ export default function Dashboard() {
                 supabase={supabase}
                 currentUser={currentUser}
                 onMoodLogged={refreshMoodCount}
+            />
+
+            <EligibilityModal
+                isOpen={isEligibilityModalOpen}
+                onClose={() => setIsEligibilityModalOpen(false)}
+                type={eligibilityModalType}
             />
         </div>
     );

@@ -64,7 +64,7 @@ export default function PHQ9Form() {
         const score = answers.reduce((a, b) => a + b, 0);
         const hasSuicidalIdeation = answers[8] > 0;
         const isCrisis = score >= 21;
-        const eligible_for_chatbot = score >= 5 && score <= 20;
+        const eligible_for_chatbot = score >= 5 && score <= 20 && !hasSuicidalIdeation;
 
         try {
             if (!supabase) throw new Error("Authentication not initialized.");
@@ -162,7 +162,11 @@ export default function PHQ9Form() {
             }
 
             await refreshUserData();
-            navigate('/');
+            if (!eligible_for_chatbot) {
+                navigate('/', { state: { showEligibilityNotice: true, type: isCrisis || hasSuicidalIdeation ? 'crisis' : 'low' } });
+            } else {
+                navigate('/');
+            }
         } catch (err) {
             setError("Failed to save assessment.");
             console.error(err);

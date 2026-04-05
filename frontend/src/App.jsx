@@ -46,7 +46,7 @@ function ChatRoute({ children }) {
     return <Navigate to="/assessment" />;
   }
   if (!userData.eligible_for_chatbot) {
-    return <Navigate to="/" />;
+    return <Navigate to="/" state={{ showEligibilityNotice: true, type: userData.has_suicidal_ideation || userData.phq9_score > 20 ? 'crisis' : 'low' }} />;
   }
   return children;
 }
