@@ -20,12 +20,16 @@ const loadChat = () => import('./pages/Chat');
 const loadAdmin = () => import('./pages/AdminDashboard');
 const loadLanding = () => import('./pages/Landing');
 const loadDocs = () => import('./pages/Docs');
+const loadPrivacy = () => import('./pages/PrivacyPolicy');
+const loadTerms = () => import('./pages/TermsOfService');
 
 const Dashboard = React.lazy(loadDashboard);
 const Chat = React.lazy(loadChat);
 const AdminDashboard = React.lazy(loadAdmin);
 const Landing = React.lazy(loadLanding);
 const Docs = React.lazy(loadDocs);
+const PrivacyPolicy = React.lazy(loadPrivacy);
+const TermsOfService = React.lazy(loadTerms);
 
 function PrivateRoute({ children }) {
   const { currentUser, userData } = useAuth();
@@ -241,6 +245,8 @@ export default function App() {
               <Route path="/shimmer-demo" element={<div className="container" style={{ padding: '4rem' }}><TextShimmerColor /></div>} />
               <Route path="/" element={<IndexRoute />} />
               <Route path="/docs" element={<Docs />} />
+              <Route path="/privacy" element={<PrivacyPolicy />} />
+              <Route path="/terms" element={<TermsOfService />} />
               <Route path="/chat" element={<ChatRoute><Chat /></ChatRoute>} />
             </Routes>
           </Suspense>

@@ -77,7 +77,7 @@ export default function Landing() {
 
                 <footer style={{ padding: '2rem 0', borderTop: '1px solid var(--glass-border)', textAlign: 'center', marginTop: 'auto' }}>
                     <p className="text-muted">
-                        &copy; {new Date().getFullYear()} AwakeSoul. <a href="/docs" style={{ color: 'var(--primary)', textDecoration: 'none' }}>Documentation</a>
+                        &copy; {new Date().getFullYear()} AwakeSoul. <a href="/docs" style={{ color: 'var(--primary)', textDecoration: 'none' }}>Documentation</a> · <a href="/privacy" style={{ color: 'var(--primary)', textDecoration: 'none' }}>Privacy Policy</a> · <a href="/terms" style={{ color: 'var(--primary)', textDecoration: 'none' }}>Terms of Service</a>
                     </p>
                 </footer>
             </div>
