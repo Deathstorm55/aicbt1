@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { SignIn, SignUp } from '@clerk/clerk-react';
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
+import WebViewBanner from '../components/WebViewBanner';
 
 export default function Auth() {
     const [isLogin, setIsLogin] = useState(true);
@@ -12,8 +13,9 @@ export default function Auth() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
-                style={{ width: '100%', display: 'flex', justifyContent: 'center' }}
+                style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
             >
+                <WebViewBanner />
                 {isLogin ? (
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                         <SignIn fallbackRedirectUrl="/" />
