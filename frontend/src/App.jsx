@@ -90,7 +90,7 @@ function AdminRoute({ children }) {
   if (!currentUser) return <Navigate to="/auth" />;
   if (!userData) return <Navigate to="/onboarding" />;
 
-  const ADMIN_EMAILS = ['ifeadeniyi8@gmail.com', 'hifeadeniyi@gmail.com'];
+  const ADMIN_EMAILS = ['ifeadeniyi8@gmail.com', 'hifeadeniyi@gmail.com', 'odualagregory@gmail.com'];
   if (!ADMIN_EMAILS.includes(userData.email)) {
     return <Navigate to="/" />;
   }
@@ -113,7 +113,7 @@ export default function App() {
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
-  const isAdmin = userData && ['ifeadeniyi8@gmail.com', 'hifeadeniyi@gmail.com'].includes(userData.email);
+  const isAdmin = userData && ['ifeadeniyi8@gmail.com', 'hifeadeniyi@gmail.com', 'odualagregory@gmail.com'].includes(userData.email);
 
   return (
     <LoadingProvider>
