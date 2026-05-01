@@ -8,6 +8,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePopup } from '../contexts/PopupContext';
 import BarLoader from '../components/ui/bar-loader';
+import RealtimeNotificationPanel from '../components/RealtimeNotificationPanel';
 
 export default function AdminDashboard() {
     const { currentUser, userData, supabase, logout } = useAuth();
@@ -86,7 +87,8 @@ export default function AdminDashboard() {
                     <h2 className="text-2xl font-bold">Admin Portal</h2>
                     <p className="text-muted text-sm">Global User Metrics & Analytics</p>
                 </div>
-                <div className="flex gap-3">
+                <div className="flex gap-3" style={{ alignItems: 'center' }}>
+                    <RealtimeNotificationPanel />
                     <button onClick={() => navigate('/')} className="btn-ghost px-4 py-2">User View</button>
                     <button onClick={logout} className="btn-ghost px-4 py-2">Sign Out</button>
                 </div>
