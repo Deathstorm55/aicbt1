@@ -27,10 +27,18 @@ Deno.serve(async (req) => {
             global: { headers: { Authorization: authHeader } }
         })
 
-        // Fetch user's own profile. RLS guarantees they can only fetch their own row.
+        // Extract clerk_user_id from the JWT to explicitly filter the query
+        const token = authHeader.replace('Bearer ', '').trim()
+        const payloadBase64 = token.split('.')[1]
+        const payload = JSON.parse(atob(payloadBase64))
+        const clerkUserId = payload.sub
+
+        // Fetch user's own profile explicitly by ID. 
+        // We can't rely solely on RLS for .single() anymore because admins have read access to all rows.
         const { data: userProfile, error: profileError } = await userClient
             .from('users')
             .select('email')
+            .eq('clerk_user_id', clerkUserId)
             .single()
 
         if (profileError || !userProfile || !userProfile.email) {
