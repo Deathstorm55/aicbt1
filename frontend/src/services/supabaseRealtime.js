@@ -11,21 +11,26 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
  */
 let _realtimeClient = null;
 
-export function getRealtimeClient() {
-    if (_realtimeClient) return _realtimeClient;
-
-    _realtimeClient = createClient(supabaseUrl, supabaseAnonKey, {
-        auth: {
-            autoRefreshToken: false,
-            persistSession: false,
-            detectSessionInUrl: false,
-        },
-        realtime: {
-            params: {
-                eventsPerSecond: 10,
+export function getRealtimeClient(token = null) {
+    if (!_realtimeClient) {
+        _realtimeClient = createClient(supabaseUrl, supabaseAnonKey, {
+            auth: {
+                autoRefreshToken: false,
+                persistSession: false,
+                detectSessionInUrl: false,
             },
-        },
-    });
+            realtime: {
+                params: {
+                    eventsPerSecond: 10,
+                },
+            },
+        });
+    }
+
+    if (token) {
+        // Set the JWT token so Realtime uses it for RLS checks
+        _realtimeClient.realtime.setAuth(token);
+    }
 
     return _realtimeClient;
 }

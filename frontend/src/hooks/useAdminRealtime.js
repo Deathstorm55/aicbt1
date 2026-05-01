@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { getRealtimeClient } from '../services/supabaseRealtime';
+import { useAuth as useClerkAuth } from '@clerk/clerk-react';
 
 /**
  * Custom hook that subscribes to Supabase Realtime channels for
@@ -14,6 +15,7 @@ export default function useAdminRealtime() {
     const [isConnected, setIsConnected] = useState(false);
     const [eventCount, setEventCount] = useState(0);
     const channelRef = useRef(null);
+    const { getToken } = useClerkAuth();
 
     const addNotification = useCallback((notification) => {
         const entry = {
@@ -38,10 +40,21 @@ export default function useAdminRealtime() {
     }, []);
 
     useEffect(() => {
-        const client = getRealtimeClient();
+        let isMounted = true;
 
-        const channel = client
-            .channel('admin-realtime-feed')
+        const setupRealtime = async () => {
+            try {
+                // Fetch the Supabase-specific JWT from Clerk to authenticate the WebSocket
+                const token = await getToken({ template: 'supabase' });
+                if (!token) {
+                    console.error("No Supabase token available for realtime.");
+                    return;
+                }
+
+                const client = getRealtimeClient(token);
+                
+                const channel = client
+                    .channel('admin-realtime-feed')
             .on(
                 'postgres_changes',
                 { event: 'INSERT', schema: 'public', table: 'users' },
@@ -119,18 +132,28 @@ export default function useAdminRealtime() {
                     });
                 }
             )
-            .subscribe((status) => {
-                setIsConnected(status === 'SUBSCRIBED');
+            .subscribe((status, err) => {
+                console.log("Realtime subscription status:", status);
+                if (err) console.error("Realtime subscription error:", err);
+                if (isMounted) setIsConnected(status === 'SUBSCRIBED');
             });
 
-        channelRef.current = channel;
+            channelRef.current = { channel, client };
+        } catch (err) {
+            console.error("Error setting up realtime:", err);
+        }
+    };
 
-        return () => {
-            if (channelRef.current) {
-                client.removeChannel(channelRef.current);
-            }
-        };
-    }, [addNotification]);
+    setupRealtime();
+
+    return () => {
+        isMounted = false;
+        if (channelRef.current) {
+            channelRef.current.client.removeChannel(channelRef.current.channel);
+            channelRef.current = null;
+        }
+    };
+}, [addNotification, getToken]);
 
     return {
         notifications,
