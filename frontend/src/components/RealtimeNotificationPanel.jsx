@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import useAdminRealtime from '../hooks/useAdminRealtime';
 import { usePopup } from '../contexts/PopupContext';
 
 const SEVERITY_STYLES = {
@@ -18,8 +17,7 @@ function timeAgo(timestamp) {
     return `${Math.floor(minutes / 60)}h ago`;
 }
 
-export default function RealtimeNotificationPanel() {
-    const { notifications, unreadCount, isConnected, markAllRead, clearAll } = useAdminRealtime();
+export default function RealtimeNotificationPanel({ notifications, unreadCount, isConnected, markAllRead, clearAll }) {
     const [isOpen, setIsOpen] = useState(false);
     const [, setTick] = useState(0);
     const panelRef = useRef(null);

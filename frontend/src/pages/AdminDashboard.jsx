@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { usePopup } from '../contexts/PopupContext';
 import BarLoader from '../components/ui/bar-loader';
 import RealtimeNotificationPanel from '../components/RealtimeNotificationPanel';
+import useAdminRealtime from '../hooks/useAdminRealtime';
 
 export default function AdminDashboard() {
     const { currentUser, userData, supabase, logout } = useAuth();
@@ -16,24 +17,34 @@ export default function AdminDashboard() {
 
     const [loading, setLoading] = useState(true);
     const [dashboardData, setDashboardData] = useState(null);
+    const [isRefreshing, setIsRefreshing] = useState(false);
     const { showPopup } = usePopup();
+    const debounceRef = useRef(null);
+    const hasLoadedOnce = useRef(false);
 
-    useEffect(() => {
-        const fetchMetrics = async () => {
-            if (!supabase || !currentUser) return;
+    // Own the realtime hook at the dashboard level
+    const realtime = useAdminRealtime();
 
-            try {
-                const { data, error: fnError } = await supabase.functions.invoke('admin-metrics', {
-                    method: 'POST'
-                });
+    // Reusable fetch function
+    const fetchMetrics = useCallback(async (opts = {}) => {
+        if (!supabase || !currentUser) return;
+        const { silent = false } = opts;
 
-                if (fnError) {
-                    throw new Error(fnError.message || "Failed to fetch metrics.");
-                }
+        if (silent) setIsRefreshing(true);
 
-                setDashboardData(data);
-            } catch (err) {
-                console.error("Admin dashboard fetch error:", err);
+        try {
+            const { data, error: fnError } = await supabase.functions.invoke('admin-metrics', {
+                method: 'POST'
+            });
+
+            if (fnError) {
+                throw new Error(fnError.message || "Failed to fetch metrics.");
+            }
+
+            setDashboardData(data);
+        } catch (err) {
+            console.error("Admin dashboard fetch error:", err);
+            if (!hasLoadedOnce.current) {
                 showPopup({
                     type: 'error',
                     title: 'Access Denied',
@@ -41,13 +52,30 @@ export default function AdminDashboard() {
                     duration: 5000
                 });
                 navigate('/');
-            } finally {
-                setLoading(false);
             }
-        };
-
-        fetchMetrics();
+        } finally {
+            setLoading(false);
+            setIsRefreshing(false);
+            hasLoadedOnce.current = true;
+        }
     }, [supabase, currentUser, navigate, showPopup]);
+
+    // Initial fetch on mount
+    useEffect(() => {
+        fetchMetrics();
+    }, [fetchMetrics]);
+
+    // Auto-refresh metrics when realtime events arrive (debounced 2s)
+    useEffect(() => {
+        if (realtime.eventCount === 0) return; // skip initial
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+        debounceRef.current = setTimeout(() => {
+            fetchMetrics({ silent: true });
+        }, 2000);
+        return () => {
+            if (debounceRef.current) clearTimeout(debounceRef.current);
+        };
+    }, [realtime.eventCount, fetchMetrics]);
 
     if (loading || !dashboardData) {
         return (
@@ -88,10 +116,42 @@ export default function AdminDashboard() {
                     <p className="text-muted text-sm">Global User Metrics & Analytics</p>
                 </div>
                 <div className="flex gap-3" style={{ alignItems: 'center' }}>
-                    <RealtimeNotificationPanel />
+                    {isRefreshing && (
+                        <span style={{ fontSize: '0.7rem', color: '#60a5fa', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                            <span style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: '#60a5fa', animation: 'pulse 1s infinite' }} />
+                            Updating...
+                        </span>
+                    )}
+                    <RealtimeNotificationPanel
+                        notifications={realtime.notifications}
+                        unreadCount={realtime.unreadCount}
+                        isConnected={realtime.isConnected}
+                        markAllRead={realtime.markAllRead}
+                        clearAll={realtime.clearAll}
+                    />
                     <button onClick={() => navigate('/')} className="btn-ghost px-4 py-2">User View</button>
                     <button onClick={logout} className="btn-ghost px-4 py-2">Sign Out</button>
                 </div>
+            </div>
+
+            {/* Live status bar */}
+            <div style={{
+                display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem',
+                padding: '0.5rem 0.85rem', borderRadius: '8px', background: 'rgba(255,255,255,0.03)',
+                border: '1px solid rgba(255,255,255,0.06)', fontSize: '0.72rem', color: 'rgba(255,255,255,0.45)',
+            }}>
+                <span style={{
+                    width: 7, height: 7, borderRadius: '50%',
+                    background: realtime.isConnected ? '#4ade80' : '#f87171',
+                    boxShadow: realtime.isConnected ? '0 0 6px #4ade80' : '0 0 6px #f87171',
+                    flexShrink: 0,
+                }} />
+                <span>{realtime.isConnected ? 'Realtime connected \u2014 metrics auto-refresh on new events' : 'Realtime disconnected \u2014 reconnecting...'}</span>
+                {realtime.eventCount > 0 && (
+                    <span style={{ marginLeft: 'auto', color: 'rgba(255,255,255,0.3)' }}>
+                        {realtime.eventCount} event{realtime.eventCount !== 1 ? 's' : ''} received
+                    </span>
+                )}
             </div>
 
             {/* KPIs */}

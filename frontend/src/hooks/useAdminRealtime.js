@@ -12,6 +12,7 @@ export default function useAdminRealtime() {
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [isConnected, setIsConnected] = useState(false);
+    const [eventCount, setEventCount] = useState(0);
     const channelRef = useRef(null);
 
     const addNotification = useCallback((notification) => {
@@ -23,6 +24,7 @@ export default function useAdminRealtime() {
         };
         setNotifications(prev => [entry, ...prev].slice(0, 50)); // keep last 50
         setUnreadCount(prev => prev + 1);
+        setEventCount(prev => prev + 1);
     }, []);
 
     const markAllRead = useCallback(() => {
@@ -134,6 +136,7 @@ export default function useAdminRealtime() {
         notifications,
         unreadCount,
         isConnected,
+        eventCount,
         markAllRead,
         clearAll,
     };
