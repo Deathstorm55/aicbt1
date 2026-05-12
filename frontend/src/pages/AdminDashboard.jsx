@@ -10,6 +10,9 @@ import { usePopup } from '../contexts/PopupContext';
 import BarLoader from '../components/ui/bar-loader';
 import RealtimeNotificationPanel from '../components/RealtimeNotificationPanel';
 import useAdminRealtime from '../hooks/useAdminRealtime';
+import ExportMenu from '../components/ui/ExportMenu';
+import { exportToCSV, exportToExcel, copyToClipboard, exportDashboardToPDF } from '../utils/exportUtils';
+import { Copy } from 'lucide-react';
 
 export default function AdminDashboard() {
     const { currentUser, userData, supabase, logout } = useAuth();
@@ -21,6 +24,7 @@ export default function AdminDashboard() {
     const { showPopup } = usePopup();
     const debounceRef = useRef(null);
     const hasLoadedOnce = useRef(false);
+    const dashboardRef = useRef(null);
 
     // Own the realtime hook at the dashboard level
     const realtime = useAdminRealtime();
@@ -87,6 +91,36 @@ export default function AdminDashboard() {
 
     const { metrics, scoreDistribution, moodTrends, moodScoreTrend, moodSummaryTable, retakeImpact, phq9VsMood } = dashboardData;
 
+    // Export Handlers
+    const handleGlobalExportPDF = async () => {
+        if (!dashboardRef.current) return;
+        showPopup({ type: 'info', title: 'Exporting...', message: 'Generating PDF, please wait.', duration: 3000 });
+        const success = await exportDashboardToPDF(dashboardRef.current, 'Research_Dashboard_Summary');
+        if (success) showPopup({ type: 'success', title: 'Success', message: 'PDF generated successfully.' });
+        else showPopup({ type: 'error', title: 'Error', message: 'Failed to generate PDF.' });
+    };
+
+    const handleCopyKPIs = async () => {
+        const kpiData = {
+            'Total Users': metrics.totalUsers,
+            'Active Users (7d)': metrics.activeUsersCount,
+            'Avg Messages/User': metrics.averageChatbotUsage,
+            'Avg PHQ-9 Score': metrics.averagePhq9,
+            'Users in Crisis': metrics.crisisCount,
+            'Total Mood Logs': metrics.totalMoodLogs,
+            'Crisis Statements': metrics.crisisStatementsCount
+        };
+        const success = await copyToClipboard(kpiData, 'Global KPI Summary');
+        if (success) showPopup({ type: 'success', title: 'Copied', message: 'KPI data copied to clipboard.' });
+    };
+
+    const exportTableCSV = (data, filename) => exportToCSV(data, filename);
+    const exportTableExcel = (data, filename) => exportToExcel(data, filename);
+    const copyTableData = async (data, title) => {
+        const success = await copyToClipboard(data, title);
+        if (success) showPopup({ type: 'success', title: 'Copied', message: `${title} copied to clipboard.` });
+    };
+
     const distributionData = [
         { name: 'Minimal (0-4)', count: scoreDistribution.minimal, fill: '#81c784' },
         { name: 'Mild (5-9)', count: scoreDistribution.mild, fill: '#dce775' },
@@ -109,7 +143,7 @@ export default function AdminDashboard() {
     };
 
     return (
-        <div className="container" style={{ paddingTop: '2rem', paddingBottom: '4rem', paddingLeft: '1rem', paddingRight: '1rem' }}>
+        <div className="container" style={{ paddingTop: '2rem', paddingBottom: '4rem', paddingLeft: '1rem', paddingRight: '1rem' }} ref={dashboardRef}>
             <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-8">
                 <div>
                     <h2 className="text-2xl font-bold">Admin Portal</h2>
@@ -128,6 +162,11 @@ export default function AdminDashboard() {
                         isConnected={realtime.isConnected}
                         markAllRead={realtime.markAllRead}
                         clearAll={realtime.clearAll}
+                    />
+                    <ExportMenu 
+                        label="Export Dashboard" 
+                        onExportPDF={handleGlobalExportPDF} 
+                        onCopyClipboard={handleCopyKPIs} 
                     />
                     <button onClick={() => navigate('/')} className="btn-ghost px-4 py-2">User View</button>
                     <button onClick={logout} className="btn-ghost px-4 py-2">Sign Out</button>
@@ -299,7 +338,15 @@ export default function AdminDashboard() {
 
                 {/* Mood Trend Summary Table */}
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9 }} className="glass-panel overflow-hidden">
-                    <h3 className="text-secondary text-lg font-semibold mb-6">Mood Trend Summary (Last 14 Days)</h3>
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-secondary text-lg font-semibold">Mood Trend Summary (Last 14 Days)</h3>
+                        <ExportMenu 
+                            compact 
+                            onExportCSV={() => exportTableCSV(moodSummaryTable, 'Mood_Trend_Summary')}
+                            onExportExcel={() => exportTableExcel(moodSummaryTable, 'Mood_Trend_Summary')}
+                            onCopyClipboard={() => copyTableData(moodSummaryTable, 'Mood Trend Summary')}
+                        />
+                    </div>
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-sm">
                             <thead>
@@ -328,7 +375,15 @@ export default function AdminDashboard() {
 
                 {/* PHQ-9 Retake Impact Table */}
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.0 }} className="glass-panel overflow-hidden">
-                    <h3 className="text-secondary text-lg font-semibold mb-6">PHQ-9 Retake Analysis (Clinical Progress)</h3>
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-secondary text-lg font-semibold">PHQ-9 Retake Analysis (Clinical Progress)</h3>
+                        <ExportMenu 
+                            compact 
+                            onExportCSV={() => exportTableCSV(retakeImpact, 'PHQ9_Retake_Analysis')}
+                            onExportExcel={() => exportTableExcel(retakeImpact, 'PHQ9_Retake_Analysis')}
+                            onCopyClipboard={() => copyTableData(retakeImpact, 'PHQ-9 Retake Analysis')}
+                        />
+                    </div>
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-sm">
                             <thead>
