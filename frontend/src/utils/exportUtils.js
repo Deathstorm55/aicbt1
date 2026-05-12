@@ -1,6 +1,6 @@
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
-import html2canvas from 'html2canvas';
+import { toPng } from 'html-to-image';
 
 /**
  * Helper to generate timestamp for filenames and reports
@@ -82,16 +82,11 @@ export const exportDashboardToPDF = async (element, filename = 'dashboard_summar
     if (!element) return;
     
     try {
-        // html2canvas requires the element to be visible
-        const canvas = await html2canvas(element, {
-            scale: 2, // Higher quality
-            useCORS: true,
-            logging: false,
+        const dataUrl = await toPng(element, {
+            quality: 0.95,
             backgroundColor: '#1a1a24' // Match dashboard dark theme background
         });
 
-        const imgData = canvas.toDataURL('image/png');
-        
         const pdf = new jsPDF({
             orientation: 'portrait',
             unit: 'mm',
@@ -99,7 +94,15 @@ export const exportDashboardToPDF = async (element, filename = 'dashboard_summar
         });
 
         const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+        
+        // We need image dimensions to calculate height
+        const img = new Image();
+        img.src = dataUrl;
+        await new Promise((resolve) => {
+            img.onload = resolve;
+        });
+        
+        const pdfHeight = (img.height * pdfWidth) / img.width;
         
         // Add a title page or header if desired
         pdf.setFontSize(16);
@@ -108,10 +111,7 @@ export const exportDashboardToPDF = async (element, filename = 'dashboard_summar
         pdf.text(`Generated: ${new Date().toLocaleString()}`, 10, 15);
         
         // Add the image (with some top margin for the header)
-        pdf.addImage(imgData, 'PNG', 0, 20, pdfWidth, pdfHeight);
-        
-        // If image height exceeds page height, handle pagination (simplified here)
-        // A more robust solution might split the image or scale it down.
+        pdf.addImage(dataUrl, 'PNG', 0, 20, pdfWidth, pdfHeight);
         
         pdf.save(`${filename}_${getTimestamp()}.pdf`);
         return true;
