@@ -25,6 +25,12 @@ export default function AdminDashboard() {
     const debounceRef = useRef(null);
     const hasLoadedOnce = useRef(false);
     const dashboardRef = useRef(null);
+    
+    // Chart Refs
+    const scoreDistRef = useRef(null);
+    const moodTrendsRef = useRef(null);
+    const moodScoreTrendRef = useRef(null);
+    const phq9VsMoodRef = useRef(null);
 
     // Own the realtime hook at the dashboard level
     const realtime = useAdminRealtime();
@@ -92,6 +98,14 @@ export default function AdminDashboard() {
     const { metrics, scoreDistribution, moodTrends, moodScoreTrend, moodSummaryTable, retakeImpact, phq9VsMood } = dashboardData;
 
     // Export Handlers
+    const exportSectionToPDF = async (ref, filename) => {
+        if (!ref.current) return;
+        showPopup({ type: 'info', title: 'Exporting...', message: `Generating ${filename} PDF...`, duration: 2000 });
+        const success = await exportDashboardToPDF(ref.current, filename);
+        if (success) showPopup({ type: 'success', title: 'Success', message: 'PDF generated successfully.' });
+        else showPopup({ type: 'error', title: 'Error', message: 'Failed to generate PDF.' });
+    };
+
     const handleGlobalExportPDF = async () => {
         if (!dashboardRef.current) return;
         showPopup({ type: 'info', title: 'Exporting...', message: 'Generating PDF, please wait.', duration: 3000 });
@@ -243,8 +257,11 @@ export default function AdminDashboard() {
             {/* Charts Grid */}
             <div className="grid grid-cols-1 gap-8">
                 {/* Score Distribution Chart */}
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="glass-panel">
-                    <h3 className="text-secondary text-lg font-semibold mb-6">PHQ-9 Severity Distribution</h3>
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="glass-panel" ref={scoreDistRef}>
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-secondary text-lg font-semibold">PHQ-9 Severity Distribution</h3>
+                        <ExportMenu compact onExportPDF={() => exportSectionToPDF(scoreDistRef, 'Score_Distribution')} />
+                    </div>
                     <div className="w-full h-[350px]">
                         <ResponsiveContainer>
                             <BarChart data={distributionData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
@@ -261,8 +278,11 @@ export default function AdminDashboard() {
                 </motion.div>
 
                 {/* Mood Trends Line Chart */}
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} className="glass-panel">
-                    <h3 className="text-secondary text-lg font-semibold mb-6">Aggregated Mood Trends (Last 14 Days)</h3>
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} className="glass-panel" ref={moodTrendsRef}>
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-secondary text-lg font-semibold">Aggregated Mood Trends (Last 14 Days)</h3>
+                        <ExportMenu compact onExportPDF={() => exportSectionToPDF(moodTrendsRef, 'Mood_Trends')} />
+                    </div>
                     {moodTrends && moodTrends.length > 0 ? (
                         <div className="w-full h-[350px]">
                             <ResponsiveContainer>
@@ -288,8 +308,11 @@ export default function AdminDashboard() {
                 </motion.div>
 
                 {/* Aggregated Mood Score Trend (Area Chart) */}
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }} className="glass-panel">
-                    <h3 className="text-secondary text-lg font-semibold mb-6">Daily Average Mood Score (Last 30 Days)</h3>
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }} className="glass-panel" ref={moodScoreTrendRef}>
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-secondary text-lg font-semibold">Daily Average Mood Score (Last 30 Days)</h3>
+                        <ExportMenu compact onExportPDF={() => exportSectionToPDF(moodScoreTrendRef, 'Daily_Avg_Mood')} />
+                    </div>
                     {moodScoreTrend && moodScoreTrend.length > 0 ? (
                         <div className="w-full h-[300px]">
                             <ResponsiveContainer>
@@ -314,8 +337,11 @@ export default function AdminDashboard() {
                 </motion.div>
 
                 {/* PHQ-9 vs Mood Combined Chart */}
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }} className="glass-panel">
-                    <h3 className="text-secondary text-lg font-semibold mb-6">PHQ-9 vs Mood Trend After Retakes</h3>
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }} className="glass-panel" ref={phq9VsMoodRef}>
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-secondary text-lg font-semibold">PHQ-9 vs Mood Trend After Retakes</h3>
+                        <ExportMenu compact onExportPDF={() => exportSectionToPDF(phq9VsMoodRef, 'PHQ9_vs_Mood')} />
+                    </div>
                     {phq9VsMood && phq9VsMood.length > 0 ? (
                         <div className="w-full h-[350px]">
                             <ResponsiveContainer>

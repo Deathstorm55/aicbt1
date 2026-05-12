@@ -84,34 +84,31 @@ export const exportDashboardToPDF = async (element, filename = 'dashboard_summar
     try {
         const dataUrl = await toPng(element, {
             quality: 0.95,
-            backgroundColor: '#1a1a24' // Match dashboard dark theme background
+            backgroundColor: '#1a1a24', // Match dashboard dark theme background
+            pixelRatio: 2, // High res
+            width: element.scrollWidth,
+            height: element.scrollHeight,
+            style: {
+                transform: 'none',
+                margin: '0',
+            }
         });
 
-        const pdf = new jsPDF({
-            orientation: 'portrait',
-            unit: 'mm',
-            format: 'a4'
-        });
-
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        
-        // We need image dimensions to calculate height
         const img = new Image();
         img.src = dataUrl;
         await new Promise((resolve) => {
             img.onload = resolve;
         });
         
-        const pdfHeight = (img.height * pdfWidth) / img.width;
-        
-        // Add a title page or header if desired
-        pdf.setFontSize(16);
-        pdf.text("Research Metrics Summary", 10, 10);
-        pdf.setFontSize(10);
-        pdf.text(`Generated: ${new Date().toLocaleString()}`, 10, 15);
-        
-        // Add the image (with some top margin for the header)
-        pdf.addImage(dataUrl, 'PNG', 0, 20, pdfWidth, pdfHeight);
+        // Create PDF with exact pixel dimensions to avoid squishing and page break cutoffs
+        const pdf = new jsPDF({
+            orientation: img.width > img.height ? 'landscape' : 'portrait',
+            unit: 'px',
+            format: [img.width, img.height]
+        });
+
+        // Add the image filling the entire page
+        pdf.addImage(dataUrl, 'PNG', 0, 0, img.width, img.height);
         
         pdf.save(`${filename}_${getTimestamp()}.pdf`);
         return true;
