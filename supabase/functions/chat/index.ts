@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                model: 'llama-3.3-70b-versatile',
+                model: 'qwen/qwen3-30b-a3b',
                 messages: messages,
                 temperature: 0.6,
                 max_tokens: 200
